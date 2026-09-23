@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- some metadata for the browser -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
@@ -14,34 +15,49 @@
 <body>
 
     <h1>Snake</h1>
+    <!-- this creates the 400x400 grid canvas where the game is drawn -->
     <canvas id="gameCanvas" width="400"
             height="400"></canvas>
+    
+    <!-- a paragraph (now empty) to display information (score or game) over messages -->
     <p id="info"></p>
 
     <script>
         // ===== GAME SETUP =====
+        // the canvas & the cts select the html canvas element and gets it 2D rendering context
+        // it is used to draw shapes
         const canvas =
             document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
+        // this divides the screen into 20x20 pixel tiles
         const gridSize = 20;
+        // the board is 20 tiles wide and 20 tiles high so 400/20 = 20 and the count is 20
         const tileCount = canvas.width / gridSize;
 
-        // ===== INITIAL STATE =====
+        // ===== INITIAL STATE VARIABLES =====
+        // this makes an array of coordinate objects. They represent the segments
+        // Segment 0 so x:10, y:10 is the head
         let snake = [
             { x: 10, y: 10 },
             { x: 9, y: 10 },
             { x: 8, y: 10 }
         ];
+        // this means it moves right - one unit on the x axis per tick but 0 on y axis
         let direction = { x: 1, y: 0 };
+        // current position of the apple on the grid
         let food = { x: 15, y: 15 };
+        // it starts at 0
         let score = 0;
 
-        // ===== DRAWING =====
+        // ===== DRAWING FUNCTION =====
         const drawGame = () => {
+            // first you want to erase the entire board before drawing a new frame
             ctx.clearRect(0, 0,
                 canvas.width, canvas.height);
 
             ctx.fillStyle = "red";
+            // this multiplies the grid coordinates by the gridSize to render squares for food and snake segments
+            // so for example tile 10 becomes pixel 200
             ctx.fillRect(
                 food.x * gridSize,
                 food.y * gridSize,
@@ -57,7 +73,8 @@
                 );
             }
         };
-
+        // this is executed once when the page loads
+        // it renders the static snapshot
         drawGame();
 
         // ===================================
