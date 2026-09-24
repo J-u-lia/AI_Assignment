@@ -21,6 +21,12 @@
     
     <!-- a paragraph (now empty) to display information (score or game) over messages -->
     <p id="info"></p>
+
+
+    <!-- a restart button -->
+    <p id="info"></p>
+    <button id="restartBtn" style="display: none; padding: 8px 16px; font-size: 16px; cursor: pointer;">Restart Game</button>
+
     
     <script>
         // ===== GAME SETUP =====
@@ -101,11 +107,12 @@
         // Commit regularly.
         //
 
-
         // this function stops the loop with the clearInterval and then displays a text that the game is over and displays the final score
         const handleGameOver = () => {
             clearInterval(gameInterval);
-            document.getElementById("info").innerText = `Game Over! Final Score: ${score}. Press Space to Restart.`;
+            document.getElementById("info").innerText = `Game Over! Final Score: ${score}.`;
+            // the reset button should be displayed when the game is over
+            document.getElementById("restartBtn").style.display = "inline-block";
         };
 
         // if you then press the space button on your keyboard you restart the game
@@ -120,6 +127,10 @@
             score = 0;
             food = generateFood();
             document.getElementById("info").innerText = "";
+
+            // the reset button needs to be hidden again when the game starts
+            document.getElementById("restartBtn").style.display = "none";
+
             // the game loop is started again
             clearInterval(gameInterval);
             gameInterval = setInterval(gameLoop, 150);
@@ -185,6 +196,10 @@
         // so the function gameLoop (which contains the moveSnake and drawGame function) is called every 150 ms
         setInterval(gameLoop, 150);
 
+        document.getElementById("restartBtn").addEventListener("click", () => {
+            resetGame();
+        });
+
 
         // Step 2: Keyboard controls (arrow keys)
         // the program needs to keep track of the keyboard and which key is pressed. This works the best with an EventListener
@@ -220,6 +235,6 @@
         // ===================================
 
     </script>
-
+let gameInterval = setInterval(gameLoop, 150);
 </body>
 </html>
