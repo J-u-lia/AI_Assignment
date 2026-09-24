@@ -113,6 +113,35 @@
 
 
         // Step 2: Keyboard controls (arrow keys)
+        // the program needs to keep track of the keyboard and which key is pressed. This works the best with an EventListener
+        // he should listen to the entire webpage (thats the document for)and it is triggered when a key is pressed down (keydown - the other option would be keyup)
+        // the event is an object that is automatically created by the browser. He holds the metadata about the key press such as event.key
+        document.addEventListener("keydown", (event) => {
+            // this checks if the key pressed was the Up Arrow and that the snake is not currently moving down
+            // if boths true then the direction is updated
+            if (event.key === "ArrowUp" && direction.y !== 1){
+                direction = {x: 0, y: -1};
+            }
+            // this checks if the key pressed was Down Arrow and the snake is not currently moving up
+            // if boths true then the direction is updated
+            else if (event.key === "ArrowDown" && direction.y !== 1){
+                direction = {x: 0, y: 1};
+            } 
+            // this checks if the key pressed was the Lef Arrow and the snake is not moving right
+            // if boths true then the drection is updated
+            else if (event.key === "ArrowLeft" && direction.x !== 1){
+                direction = {x: -1, y: 0};
+            }
+            // checks if the key pressed down was Right Arrow and the snake is not moving left
+            // if boths true the direction is updated
+            else if (event.key === "ArrowRight" && direction.x !== -1){
+                direction = {x: 1, y: 0};
+            }
+        })
+
+
+
+
         // Step 3: Eating and growing
         // Step 4: Game over
         // Step 5: Improvements
