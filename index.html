@@ -107,8 +107,13 @@
         // Commit regularly.
         //
 
+        // to track the state of the game
+        let isGameOver = false;
+
+
         // this function stops the loop with the clearInterval and then displays a text that the game is over and displays the final score
         const handleGameOver = () => {
+            isGameOver = true;
             clearInterval(gameInterval);
             document.getElementById("info").innerText = `Game Over! Final Score: ${score}.`;
             // the reset button should be displayed when the game is over
@@ -118,6 +123,7 @@
         // if you then press the space button on your keyboard you restart the game
         // this means that the snake is set to a certain point, the direction is set new, the score is 0 again and the food needs to be generated.
         const resetGame = () => {
+            isGameOver = false;
             snake = [
                 { x: 10, y: 10 },
                 { x: 9, y: 10 },
@@ -186,6 +192,9 @@
         // that the snake really moves foreward on the screen the functions need to be called every 150 ms
         // it is important to call the drawGame because the array would change internally but the webpage would continue displaying the old frame
         const gameLoop = () => {
+            if (isGameOver){
+                return;
+            }
             moveSnake();
             drawGame();
         };
@@ -206,6 +215,9 @@
         // he should listen to the entire webpage (thats the document for)and it is triggered when a key is pressed down (keydown - the other option would be keyup)
         // the event is an object that is automatically created by the browser. He holds the metadata about the key press such as event.key
         document.addEventListener("keydown", (event) => {
+            // the game should ignore every imput when the game is over
+            if (isGameOver) return;
+            
             // this checks if the key pressed was the Up Arrow and that the snake is not currently moving down
             // if boths true then the direction is updated
             if (event.key === "ArrowUp" && direction.y !== 1){
