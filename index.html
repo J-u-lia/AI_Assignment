@@ -21,7 +21,7 @@
     
     <!-- a paragraph (now empty) to display information (score or game) over messages -->
     <p id="info"></p>
-
+    
     <script>
         // ===== GAME SETUP =====
         // the canvas & the cts select the html canvas element and gets it 2D rendering context
@@ -35,6 +35,16 @@
         const tileCount = canvas.width / gridSize;
 
         // ===== INITIAL STATE VARIABLES =====
+        // Step 3: Eating and growing
+        // first create a function that generates the food at random coordinates inside the grid
+        const generateFood = () => {
+            return {
+                x: Math.floor(Math.random() * 20),
+                y: Math.floor(Math.random() * 20)
+            };
+        };
+        
+        
         // this makes an array of coordinate objects. They represent the segments
         // Segment 0 so x:10, y:10 is the head
         let snake = [
@@ -44,9 +54,13 @@
         ];
         // this means it moves right - one unit on the x axis per tick but 0 on y axis
         let direction = { x: 1, y: 0 };
-        // current position of the apple on the grid
-        let food = { x: 15, y: 15 };
+        // current position of the apple on the grid - which is just for the step 1 and 2 now at step 3 it should be generated ranodm
+        //let food = { x: 15, y: 15 };
         // it starts at 0
+        //let score = 0;
+
+        // the food positon and the score need to be initialized 
+        let food = generateFood();
         let score = 0;
 
         // ===== DRAWING FUNCTION =====
@@ -77,6 +91,7 @@
         // it renders the static snapshot
         drawGame();
 
+
         // ===================================
         // BUILD THE GAME FROM HERE
         // ===================================
@@ -85,6 +100,32 @@
         // to guide your work through each step. 
         // Commit regularly.
         //
+
+
+        // this function stops the loop with the clearInterval and then displays a text that the game is over and displays the final score
+        const handleGameOver = () => {
+            clearInterval(gameInterval);
+            document.getElementById("info").innerText = `Game Over! Final Score: ${score}. Press Space to Restart.`;
+        };
+
+        // if you then press the space button on your keyboard you restart the game
+        // this means that the snake is set to a certain point, the direction is set new, the score is 0 again and the food needs to be generated.
+        const resetGame = () => {
+            snake = [
+                { x: 10, y: 10 },
+                { x: 9, y: 10 },
+                { x: 8, y: 10 }
+            ];
+            direction = { x: 1, y: 0 };
+            score = 0;
+            food = generateFood();
+            document.getElementById("info").innerText = "";
+            // the game loop is started again
+            clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, 150);
+        };
+
+
         // Step 1: Movement (game loop)
         const moveSnake = () => {
             // the head is the first element in the array so snake[0]
@@ -94,11 +135,40 @@
                 x: snake[0].x + direction.x,
                 y: snake[0].y + direction.y
             };
+            
+            // for step 4 there needs to be a check for a wall collision
+            // it checks if it is out of the grid so smaller then 0 or bigger then the titleCount
+            const hitWall = head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount;
+            
+            // it is also possible that the snake hits itselfe - thats when the snakes head touches the end of it
+            const hitSelf = snake.some(segment => segment.x === head.x && segment.y === head.y);
+
+            // if either of those boolean variables are true then the game is over and the handleGameOver() function needs to be called
+            if (hitWall || hitSelf){
+                handleGameOver();
+                return;
+            }
+
             // with .unshift(head) the new head is added to the front
             snake.unshift(head);
+            // THIS IS WORKING FOR STEP 1 AND 2:
             // with .pop() the last tail segment is removed
-            snake.pop();
+            //snake.pop();
             // this way the snake keeps the same length
+
+            // FOR STEP 3 moveSnake MUST BE UPDATED BECAUSE THE SNAKE SHOULD GROW:
+            // the function needs to check if the new head position matches the food position 
+            if (head.x === food.x && head.y === food.y){
+                // if so then the snake ate the food so the score needs to go up by 1
+                score += 1;
+                // and a new food position must be generated
+                // the snake.pop() is not called here and thats why the snake grows 
+                food = generateFood();
+            }
+            // if the snake did not eat any foot the tail must be removed so it stays the same length
+            else {
+                snake.pop();
+            }
 
         }
 
@@ -108,6 +178,10 @@
             moveSnake();
             drawGame();
         };
+        
+        // for step 4 make a variable
+        let gameInterval
+
         // so the function gameLoop (which contains the moveSnake and drawGame function) is called every 150 ms
         setInterval(gameLoop, 150);
 
@@ -140,9 +214,6 @@
         })
 
 
-
-
-        // Step 3: Eating and growing
         // Step 4: Game over
         // Step 5: Improvements
         //
