@@ -79,6 +79,11 @@
         // Display saved high score on load
         document.getElementById("highScore").innerText = highScore;
 
+        // array of the different colors for the snake
+        const colorPalette = ["#2ecc71", "#3498db", "#e74c3c", "#9b59b6", "#f39c12", "#1abc9c"];
+        // the color should be randomly selected out of the array
+        let snakeColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+
         // ===== DRAWING FUNCTION =====
         const drawGame = () => {
             // first you want to erase the entire board before drawing a new frame
@@ -94,7 +99,7 @@
                 gridSize, gridSize
             );
 
-            ctx.fillStyle = "black";
+            ctx.fillStyle = snakeColor;
             for (const segment of snake) {
                 ctx.fillRect(
                     segment.x * gridSize,
@@ -150,7 +155,11 @@
             direction = { x: 1, y: 0 };
             score = 0;
             food = generateFood();
-            // the score needs to be reseted too 
+
+            // pick a new random color for every new run
+            snakeColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+
+            // the score needs to be resetted too 
             document.getElementById("currentScore").innerText = score;
             document.getElementById("info").innerText = "";
 
