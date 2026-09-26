@@ -26,7 +26,12 @@
     <!-- a restart button -->
     <button id="restartBtn" style="display: none; padding: 8px 16px; font-size: 16px; cursor: pointer;">Restart Game</button>
 
-    
+    <!-- Score Board Container -->
+    <div id="scoreBoard" style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">
+        Score: <span id="currentScore">0</span> | High Score: <span id="highScore">0</span>
+    </div>
+
+
     <script>
         // ===== GAME SETUP =====
         // the canvas & the cts select the html canvas element and gets it 2D rendering context
@@ -67,6 +72,12 @@
         // the food positon and the score need to be initialized 
         let food = generateFood();
         let score = 0;
+
+        // set the highScore and the currentSpeed variables
+        let highScore = localStorage.getItem("snakeHighScore") || 0;
+
+        // Display saved high score on load
+        document.getElementById("highScore").innerText = highScore;
 
         // ===== DRAWING FUNCTION =====
         const drawGame = () => {
@@ -139,6 +150,8 @@
             direction = { x: 1, y: 0 };
             score = 0;
             food = generateFood();
+            // the score needs to be reseted too 
+            document.getElementById("currentScore").innerText = score;
             document.getElementById("info").innerText = "";
 
             // the reset button needs to be hidden again when the game starts
@@ -184,6 +197,18 @@
             if (head.x === food.x && head.y === food.y){
                 // if so then the snake ate the food so the score needs to go up by 1
                 score += 1;
+
+                // first the current score needs to be updated and displayed on the page
+                document.getElementById("currentScore").innerText = score;
+
+                // the score needs to be checked
+                // so if the current score is bigger then the highscore then the highscore i sthe current score
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem("snakeHighScore", highScore);
+                    document.getElementById("highScore").innerText = highScore;
+                }
+
                 // and a new food position must be generated
                 // the snake.pop() is not called here and thats why the snake grows 
                 food = generateFood();
