@@ -24,7 +24,6 @@
 
 
     <!-- a restart button -->
-    <p id="info"></p>
     <button id="restartBtn" style="display: none; padding: 8px 16px; font-size: 16px; cursor: pointer;">Restart Game</button>
 
     
@@ -45,8 +44,8 @@
         // first create a function that generates the food at random coordinates inside the grid
         const generateFood = () => {
             return {
-                x: Math.floor(Math.random() * 20),
-                y: Math.floor(Math.random() * 20)
+                x: Math.floor(Math.random() * tileCount),
+                y: Math.floor(Math.random() * tileCount)
             };
         };
         
@@ -120,6 +119,14 @@
             document.getElementById("restartBtn").style.display = "inline-block";
         };
 
+        // a global variable as the timer variable
+        let gameInterval;
+        // in order to manage the timers better and safer define a wrapper function
+        const startGame = () =>{
+            clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, 150);
+        };
+
         // if you then press the space button on your keyboard you restart the game
         // this means that the snake is set to a certain point, the direction is set new, the score is 0 again and the food needs to be generated.
         const resetGame = () => {
@@ -138,8 +145,7 @@
             document.getElementById("restartBtn").style.display = "none";
 
             // the game loop is started again
-            clearInterval(gameInterval);
-            gameInterval = setInterval(gameLoop, 150);
+            startGame();
         };
 
 
@@ -200,10 +206,9 @@
         };
         
         // for step 4 make a variable
-        let gameInterval
-        
         // so the function gameLoop (which contains the moveSnake and drawGame function) is called every 150 ms
-        setInterval(gameLoop, 150);
+        startGame();
+        
 
         document.getElementById("restartBtn").addEventListener("click", () => {
             resetGame();
@@ -225,7 +230,7 @@
             }
             // this checks if the key pressed was Down Arrow and the snake is not currently moving up
             // if boths true then the direction is updated
-            else if (event.key === "ArrowDown" && direction.y !== 1){
+            else if (event.key === "ArrowDown" && direction.y !== -1){
                 direction = {x: 0, y: 1};
             } 
             // this checks if the key pressed was the Lef Arrow and the snake is not moving right
