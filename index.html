@@ -31,6 +31,12 @@
         Score: <span id="currentScore">0</span> | High Score: <span id="highScore">0</span>
     </div>
 
+    <!-- a start/pause button next to the scoreboard -->
+    <div id="controls" style="margin-bottom: 10px;">
+        <button id="startBtn" style="padding: 6px 12px; font-size: 14px; cursor: pointer;">
+            Start / Pause (Space)
+        </button>
+    </div>
 
     <script>
         // ===== GAME SETUP =====
@@ -88,6 +94,9 @@
         let initialSpeed = 150; // Startgeschwindigkeit in ms
         let currentSpeed = initialSpeed;
 
+        // i want that the game only starts when the player wants to so if he presses the start/pause button
+        let isPaused = true;
+
         // ===== DRAWING FUNCTION =====
         const drawGame = () => {
             // first you want to erase the entire board before drawing a new frame
@@ -128,6 +137,26 @@
 
         // to track the state of the game
         let isGameOver = false;
+
+        // a function to handle what should happen if the game is paused or not
+        const togglePause = () => {
+            // if the game is already over then nothing should happen
+            if (isGameOver) return;
+            // if its pause then it should change its state so not paused
+            isPaused = !isPaused;
+            // if the game is paused it should display the following text
+            if (isPaused){
+                clearInterval(gameInterval);
+                document.getElementById("info").innerText = "PAUSED - Press Space to Resume";
+                document.getElementById("startBtn").innerText = "Resume (Space)";
+            }
+            // if its not paused then the game should start and some other text should be displayed
+            else{
+                startGame(); // Start interval again
+                document.getElementById("info").innerText = "";
+                document.getElementById("startBtn").innerText = "Pause (Space)";
+            }
+        };
 
 
         // this function stops the loop with the clearInterval and then displays a text that the game is over and displays the final score
@@ -244,7 +273,7 @@
         // that the snake really moves foreward on the screen the functions need to be called every 150 ms
         // it is important to call the drawGame because the array would change internally but the webpage would continue displaying the old frame
         const gameLoop = () => {
-            if (isGameOver){
+            if (isGameOver || isPaused){
                 return;
             }
             moveSnake();
@@ -253,8 +282,14 @@
         
         // for step 4 make a variable
         // so the function gameLoop (which contains the moveSnake and drawGame function) is called every 150 ms
-        startGame();
+        // startGame();
         
+        // Attach click event & remove keyboard focus
+        document.getElementById("startBtn").addEventListener("click", (event) => {
+            togglePause();
+            // this prevents the double-triggering because it unfocuses the button
+            event.target.blur();
+        });
 
         document.getElementById("restartBtn").addEventListener("click", () => {
             resetGame();
@@ -265,7 +300,18 @@
         // the program needs to keep track of the keyboard and which key is pressed. This works the best with an EventListener
         // he should listen to the entire webpage (thats the document for)and it is triggered when a key is pressed down (keydown - the other option would be keyup)
         // the event is an object that is automatically created by the browser. He holds the metadata about the key press such as event.key
+        // an eventlistener for the spacebar. if its pressed the pause button is aktivated
         document.addEventListener("keydown", (event) => {
+            // it checks if the key pressed was the spacebar
+            if (event.key === " " || event.code === "Space"){
+                // if so then the default action of the webbrowser is stopped
+                event.preventDefault();
+                // the fucntion for handling the pasuing and unpausing is called
+                togglePause();
+                return
+            }
+            
+            
             // the game should ignore every imput when the game is over
             if (isGameOver) return;
             
@@ -291,6 +337,12 @@
             }
         })
 
+        
+        
+
+        // Display start prompt on screen load
+        document.getElementById("info").innerText = "Press Spacebar or click Start to begin!";
+        drawGame(); // Render initial snake and food setup
 
         // Step 4: Game over
         // Step 5: Improvements
