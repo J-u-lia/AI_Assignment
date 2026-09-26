@@ -96,6 +96,7 @@
 
         // i want that the game only starts when the player wants to so if he presses the start/pause button
         let isPaused = true;
+    
 
         // ===== DRAWING FUNCTION =====
         const drawGame = () => {
@@ -135,9 +136,18 @@
         // Commit regularly.
         //
 
+        // a global variable as the timer variable
+        let gameInterval;
+        // in order to manage the timers better and safer define a wrapper function
+        const startGame = () =>{
+            clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, currentSpeed);
+        };
+
+
         // to track the state of the game
         let isGameOver = false;
-
+      
         // a function to handle what should happen if the game is paused or not
         const togglePause = () => {
             // if the game is already over then nothing should happen
@@ -168,18 +178,11 @@
             document.getElementById("restartBtn").style.display = "inline-block";
         };
 
-        // a global variable as the timer variable
-        let gameInterval;
-        // in order to manage the timers better and safer define a wrapper function
-        const startGame = () =>{
-            clearInterval(gameInterval);
-            gameInterval = setInterval(gameLoop, currentSpeed);
-        };
-
         // if you then press the space button on your keyboard you restart the game
         // this means that the snake is set to a certain point, the direction is set new, the score is 0 again and the food needs to be generated.
         const resetGame = () => {
             isGameOver = false;
+            isPaused = false;
             snake = [
                 { x: 10, y: 10 },
                 { x: 9, y: 10 },
@@ -288,7 +291,7 @@
         document.getElementById("startBtn").addEventListener("click", (event) => {
             togglePause();
             // this prevents the double-triggering because it unfocuses the button
-            event.target.blur();
+            //event.target.blur();
         });
 
         document.getElementById("restartBtn").addEventListener("click", () => {
