@@ -6,352 +6,422 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
     <title>Snake Game</title>
-    <style>
-        canvas {
-            border: 1px solid black;
-        }
-    </style>
+    <!-- connection to the css file for styling the game-->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <h1>Snake</h1>
-    <!-- this creates the 400x400 grid canvas where the game is drawn -->
-    <canvas id="gameCanvas" width="400"
-            height="400"></canvas>
+    <!-- first define the home page -->
+    <div id="homeScreen" class="screen active">
+        <div class="card">
+            <!-- a title and a short description of how the game works plus a button to get to the game-->
+            <h1>Welcome to the Snake Game</h1>
+            <p>In order to play the game click on the following button:</p>
+
+            <button class="btn btn-primary" id="letsPlayBtn">Let's Play</button>
+
+            <div class="description-box">
+                <h3>How to Play:</h3>
+                <ul>
+                    <li>Use <strong>Arrow Keys</strong> to control direction.</li>
+                    <li>Eat red apples to grow and raise your score.</li>
+                    <li>Avoid running into walls or your own tail!</li>
+                    <li>Press <strong>Spacebar</strong> to Pause/Resume at any time.</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- and then the second screen where the game is-->
+    <div id="gameScreen" class="screen">
+        <h1>Let's Play</h1>
+        
+        <!-- this creates the 400x400 grid canvas where the game is drawn -->
+        <canvas id="gameCanvas" width="400"
+                height="400"></canvas>
+        
+        <!-- a paragraph (now empty) to display information (score or game) over messages -->
+        <p id="info"></p>
+        
+        <!-- grouped the buttons together a start/pause button and a restart button -->
+        <div id="controls" class ="control-group">
+            <button id="startBtn" class="btn btn-game-control">Start</button>
+            <!-- a restart button -->
+            <button id="restartBtn" class="btn btn-restart" style="display: none;">Restart Game</button>
+        </div>
+
+        <!-- Score Board Container -->
+        <div id="scoreBoard" style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">
+            Score: <span id="currentScore">0</span> | High Score: <span id="highScore">0</span>
+        </div>
+
+        <button id="homeBtn" class="btn btn-outline"> ← Back to Home </button>
+
     
-    <!-- a paragraph (now empty) to display information (score or game) over messages -->
-    <p id="info"></p>
 
-
-    <!-- a restart button -->
-    <button id="restartBtn" style="display: none; padding: 8px 16px; font-size: 16px; cursor: pointer;">Restart Game</button>
-
-    <!-- Score Board Container -->
-    <div id="scoreBoard" style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">
-        Score: <span id="currentScore">0</span> | High Score: <span id="highScore">0</span>
-    </div>
-
-    <!-- a start/pause button next to the scoreboard -->
-    <div id="controls" style="margin-bottom: 10px;">
-        <button id="startBtn" style="padding: 6px 12px; font-size: 14px; cursor: pointer;">
-            Start / Pause (Space)
-        </button>
-    </div>
-
-    <script>
-        // ===== GAME SETUP =====
-        // the canvas & the cts select the html canvas element and gets it 2D rendering context
-        // it is used to draw shapes
-        const canvas =
-            document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        // this divides the screen into 20x20 pixel tiles
-        const gridSize = 20;
-        // the board is 20 tiles wide and 20 tiles high so 400/20 = 20 and the count is 20
-        const tileCount = canvas.width / gridSize;
-
-        // ===== INITIAL STATE VARIABLES =====
-        // Step 3: Eating and growing
-        // first create a function that generates the food at random coordinates inside the grid
-        const generateFood = () => {
-            return {
-                x: Math.floor(Math.random() * tileCount),
-                y: Math.floor(Math.random() * tileCount)
+        <script>
+            // first the navigation functions for the switching pages
+            const showScreen = (screenName) => {
+                const homeScreen = document.getElementById("homeScreen")
+                const gameScreen = document.getElementById("gameScreen");
+            
+                if (screenName === 'game'){
+                    // if you are on the game site then the homeScreen shouldn't be active but the gameScreen
+                    homeScreen.classList.remove("active");
+                    gameScreen.classList.add("active");
+                    resetGame(false);
+                }
+                else{
+                    // if you are not on the game site then the gameScreen shouldn't be active but the homeScreen
+                    gameScreen.classList.remove("active");
+                    homeScreen.classList.add("active");
+                    if (!isPaused && !isGameOver){
+                        togglePause();
+                    }
+                }
             };
-        };
-        
-        
-        // this makes an array of coordinate objects. They represent the segments
-        // Segment 0 so x:10, y:10 is the head
-        let snake = [
-            { x: 10, y: 10 },
-            { x: 9, y: 10 },
-            { x: 8, y: 10 }
-        ];
-        // this means it moves right - one unit on the x axis per tick but 0 on y axis
-        let direction = { x: 1, y: 0 };
-        // current position of the apple on the grid - which is just for the step 1 and 2 now at step 3 it should be generated ranodm
-        //let food = { x: 15, y: 15 };
-        // it starts at 0
-        //let score = 0;
 
-        // the food positon and the score need to be initialized 
-        let food = generateFood();
-        let score = 0;
+            // if you press on the letsPlayBtn then the site should switch to the game site
+            document.getElementById("letsPlayBtn").addEventListener("click", () => {
+                showScreen('game');
+            });
 
-        // set the highScore and the currentSpeed variables
-        let highScore = localStorage.getItem("snakeHighScore") || 0;
+            // if you have pressed the homeBtn then switch it to home screen
+            document.getElementById("homeBtn").addEventListener("click", () => {
+                showScreen('home');
+            });
 
-        // Display saved high score on load
-        document.getElementById("highScore").innerText = highScore;
+            
 
-        // array of the different colors for the snake
-        const colorPalette = ["#2ecc71", "#3498db", "#e74c3c", "#9b59b6", "#f39c12", "#1abc9c"];
-        // the color should be randomly selected out of the array
-        let snakeColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+            // ===== GAME SETUP =====
+            // the canvas & the cts select the html canvas element and gets it 2D rendering context
+            // it is used to draw shapes
+            const canvas =
+                document.getElementById("gameCanvas");
+            const ctx = canvas.getContext("2d");
+            // this divides the screen into 20x20 pixel tiles
+            const gridSize = 20;
+            // the board is 20 tiles wide and 20 tiles high so 400/20 = 20 and the count is 20
+            const tileCount = canvas.width / gridSize;
 
-        // Variables for speed settings
-        let initialSpeed = 150; // Startgeschwindigkeit in ms
-        let currentSpeed = initialSpeed;
-
-        // i want that the game only starts when the player wants to so if he presses the start/pause button
-        let isPaused = true;
-    
-
-        // ===== DRAWING FUNCTION =====
-        const drawGame = () => {
-            // first you want to erase the entire board before drawing a new frame
-            ctx.clearRect(0, 0,
-                canvas.width, canvas.height);
-
-            ctx.fillStyle = "red";
-            // this multiplies the grid coordinates by the gridSize to render squares for food and snake segments
-            // so for example tile 10 becomes pixel 200
-            ctx.fillRect(
-                food.x * gridSize,
-                food.y * gridSize,
-                gridSize, gridSize
-            );
-
-            ctx.fillStyle = snakeColor;
-            for (const segment of snake) {
-                ctx.fillRect(
-                    segment.x * gridSize,
-                    segment.y * gridSize,
-                    gridSize, gridSize
-                );
-            }
-        };
-        // this is executed once when the page loads
-        // it renders the static snapshot
-        drawGame();
-
-
-        // ===================================
-        // BUILD THE GAME FROM HERE
-        // ===================================
-        //
-        // Use your custom agent in VS Code Chat 
-        // to guide your work through each step. 
-        // Commit regularly.
-        //
-
-        // a global variable as the timer variable
-        let gameInterval;
-        // in order to manage the timers better and safer define a wrapper function
-        const startGame = () =>{
-            clearInterval(gameInterval);
-            gameInterval = setInterval(gameLoop, currentSpeed);
-        };
-
-
-        // to track the state of the game
-        let isGameOver = false;
-      
-        // a function to handle what should happen if the game is paused or not
-        const togglePause = () => {
-            // if the game is already over then nothing should happen
-            if (isGameOver) return;
-            // if its pause then it should change its state so not paused
-            isPaused = !isPaused;
-            // if the game is paused it should display the following text
-            if (isPaused){
-                clearInterval(gameInterval);
-                document.getElementById("info").innerText = "PAUSED - Press Space to Resume";
-                document.getElementById("startBtn").innerText = "Resume (Space)";
-            }
-            // if its not paused then the game should start and some other text should be displayed
-            else{
-                startGame(); // Start interval again
-                document.getElementById("info").innerText = "";
-                document.getElementById("startBtn").innerText = "Pause (Space)";
-            }
-        };
-
-
-        // this function stops the loop with the clearInterval and then displays a text that the game is over and displays the final score
-        const handleGameOver = () => {
-            isGameOver = true;
-            clearInterval(gameInterval);
-            document.getElementById("info").innerText = `Game Over! Final Score: ${score}.`;
-            // the reset button should be displayed when the game is over
-            document.getElementById("restartBtn").style.display = "inline-block";
-        };
-
-        // if you then press the space button on your keyboard you restart the game
-        // this means that the snake is set to a certain point, the direction is set new, the score is 0 again and the food needs to be generated.
-        const resetGame = () => {
-            isGameOver = false;
-            isPaused = false;
-            snake = [
+            // ===== INITIAL STATE VARIABLES =====
+            // Step 3: Eating and growing
+            // first create a function that generates the food at random coordinates inside the grid
+            const generateFood = () => {
+                return {
+                    x: Math.floor(Math.random() * tileCount),
+                    y: Math.floor(Math.random() * tileCount)
+                };
+            };
+            
+            
+            // this makes an array of coordinate objects. They represent the segments
+            // Segment 0 so x:10, y:10 is the head
+            let snake = [
                 { x: 10, y: 10 },
                 { x: 9, y: 10 },
                 { x: 8, y: 10 }
             ];
-            direction = { x: 1, y: 0 };
-            score = 0;
+            // this means it moves right - one unit on the x axis per tick but 0 on y axis
+            let direction = { x: 1, y: 0 };
+            // current position of the apple on the grid - which is just for the step 1 and 2 now at step 3 it should be generated ranodm
+            //let food = { x: 15, y: 15 };
+            // it starts at 0
+            //let score = 0;
 
-            // the speed needs to be resettet too
-            currentSpeed = initialSpeed;
+            // the food positon and the score need to be initialized 
+            let food = generateFood();
+            let score = 0;
 
-            food = generateFood();
+            // set the highScore and the currentSpeed variables
+            let highScore = localStorage.getItem("snakeHighScore") || 0;
 
-            // pick a new random color for every new run
-            snakeColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+            // Display saved high score on load
+            document.getElementById("highScore").innerText = highScore;
 
-            // the score needs to be resetted too 
-            document.getElementById("currentScore").innerText = score;
-            document.getElementById("info").innerText = "";
+            // array of the different colors for the snake
+            const colorPalette = ["#2ecc71", "#3498db", "#e74c3c", "#9b59b6", "#f39c12", "#1abc9c"];
+            // the color should be randomly selected out of the array
+            let snakeColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
 
-            // the reset button needs to be hidden again when the game starts
-            document.getElementById("restartBtn").style.display = "none";
+            // Variables for speed settings
+            let initialSpeed = 150; // Startgeschwindigkeit in ms
+            let currentSpeed = initialSpeed;
 
-            // the game loop is started again
-            startGame();
-        };
+            // i want that the game only starts when the player wants to so if he presses the start/pause button
+            let isPaused = true;
+            // to track the state of the game
+            let isGameOver = false;
 
+            // ===== DRAWING FUNCTION =====
+            const drawGame = () => {
+                // first you want to erase the entire board before drawing a new frame
+                ctx.clearRect(0, 0,
+                    canvas.width, canvas.height);
 
-        // Step 1: Movement (game loop)
-        const moveSnake = () => {
-            // the head is the first element in the array so snake[0]
-            // then calculate the new head position and create a new object
-            // if the head was at x: 5 and is moving right (so the direction.x = 1), the head will be at x: 6
-            const head = {
-                x: snake[0].x + direction.x,
-                y: snake[0].y + direction.y
+                ctx.fillStyle = "red";
+                // this multiplies the grid coordinates by the gridSize to render squares for food and snake segments
+                // so for example tile 10 becomes pixel 200
+                ctx.fillRect(
+                    food.x * gridSize,
+                    food.y * gridSize,
+                    gridSize, gridSize
+                );
+
+                ctx.fillStyle = snakeColor;
+                for (const segment of snake) {
+                    ctx.fillRect(
+                        segment.x * gridSize,
+                        segment.y * gridSize,
+                        gridSize, gridSize
+                    );
+                }
             };
-            
-            // for step 4 there needs to be a check for a wall collision
-            // it checks if it is out of the grid so smaller then 0 or bigger then the titleCount
-            const hitWall = head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount;
-            
-            // it is also possible that the snake hits itselfe - thats when the snakes head touches the end of it
-            const hitSelf = snake.some(segment => segment.x === head.x && segment.y === head.y);
+            // this is executed once when the page loads
+            // it renders the static snapshot
+            drawGame();
 
-            // if either of those boolean variables are true then the game is over and the handleGameOver() function needs to be called
-            if (hitWall || hitSelf){
-                handleGameOver();
-                return;
-            }
 
-            // with .unshift(head) the new head is added to the front
-            snake.unshift(head);
-            // THIS IS WORKING FOR STEP 1 AND 2:
-            // with .pop() the last tail segment is removed
-            //snake.pop();
-            // this way the snake keeps the same length
+            // ===================================
+            // BUILD THE GAME FROM HERE
+            // ===================================
+            //
+            // Use your custom agent in VS Code Chat 
+            // to guide your work through each step. 
+            // Commit regularly.
+            //
 
-            // FOR STEP 3 moveSnake MUST BE UPDATED BECAUSE THE SNAKE SHOULD GROW:
-            // the function needs to check if the new head position matches the food position 
-            if (head.x === food.x && head.y === food.y){
-                // if so then the snake ate the food so the score needs to go up by 1
-                score += 1;
+            // a global variable as the timer variable
+            let gameInterval;
+            // in order to manage the timers better and safer define a wrapper function
+            const startGame = () =>{
+                clearInterval(gameInterval);
+                gameInterval = setInterval(gameLoop, currentSpeed);
+            };
 
-                // first the current score needs to be updated and displayed on the page
+
+                   
+            // a function to handle what should happen if the game is paused or not
+            const togglePause = () => {
+                // if the game is already over then nothing should happen
+                if (isGameOver) return;
+                // if its pause then it should change its state so not paused
+                isPaused = !isPaused;
+                // if the game is paused it should display the following text
+                if (isPaused){
+                    clearInterval(gameInterval);
+                    document.getElementById("info").innerText = "PAUSED - Press Start or Space to Play";
+                    document.getElementById("startBtn").innerText = "Start";
+                }
+                // if its not paused then the game should start and some other text should be displayed
+                else{
+                    startGame(); // Start interval again
+                    document.getElementById("info").innerText = "";
+                    document.getElementById("startBtn").innerText = "Pause";
+                }
+            };
+
+
+            // this function stops the loop with the clearInterval and then displays a text that the game is over and displays the final score
+            const handleGameOver = () => {
+                isGameOver = true;
+                clearInterval(gameInterval);
+                document.getElementById("info").innerText = `Game Over! Final Score: ${score}.`;
+                // the reset button should be displayed when the game is over and the startBtn should be hidden
+                document.getElementById("startBtn").style.display = "none";
+                document.getElementById("restartBtn").style.display = "inline-block";
+            };
+
+            // if you then press the space button on your keyboard you restart the game
+            // this means that the snake is set to a certain point, the direction is set new, the score is 0 again and the food needs to be generated.
+            const resetGame = (autoStart = false) => {
+                isGameOver = false;
+                clearInterval(gameInterval);
+                snake = [
+                    { x: 10, y: 10 },
+                    { x: 9, y: 10 },
+                    { x: 8, y: 10 }
+                ];
+                direction = { x: 1, y: 0 };
+                score = 0;
+
+                // the speed needs to be resettet too
+                currentSpeed = initialSpeed;
+
+                food = generateFood();
+
+                // pick a new random color for every new run
+                snakeColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+               
+                // the score needs to be resetted too 
                 document.getElementById("currentScore").innerText = score;
+                // the pause/start button needs to be visible again
+                document.getElementById("startBtn").style.display = "inline-block";
+                // the reset button needs to be hidden again when the game starts
+                document.getElementById("restartBtn").style.display = "none";
 
-                // the score needs to be checked
-                // so if the current score is bigger then the highscore then the highscore i sthe current score
-                if (score > highScore) {
-                    highScore = score;
-                    localStorage.setItem("snakeHighScore", highScore);
-                    document.getElementById("highScore").innerText = highScore;
+                if (autoStart){
+                    isPaused = false;
+                    document.getElementById("info").innerText = "";
+                    document.getElementById("startBtn").innerText = "Pause (Space)";
+                    // the game loop is started again
+                    startGame();
+                }
+                else{
+                    isPaused = true;
+                    document.getElementById("info").innerText = "Press Start to Play!";
+                    document.getElementById("startBtn").innerText = "Start";
+                    drawGame();
+                }
+            };
+
+
+            // Step 1: Movement (game loop)
+            const moveSnake = () => {
+                // the head is the first element in the array so snake[0]
+                // then calculate the new head position and create a new object
+                // if the head was at x: 5 and is moving right (so the direction.x = 1), the head will be at x: 6
+                const head = {
+                    x: snake[0].x + direction.x,
+                    y: snake[0].y + direction.y
+                };
+                
+                // for step 4 there needs to be a check for a wall collision
+                // it checks if it is out of the grid so smaller then 0 or bigger then the titleCount
+                const hitWall = head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount;
+                
+                // it is also possible that the snake hits itselfe - thats when the snakes head touches the end of it
+                const hitSelf = snake.some(segment => segment.x === head.x && segment.y === head.y);
+
+                // if either of those boolean variables are true then the game is over and the handleGameOver() function needs to be called
+                if (hitWall || hitSelf){
+                    handleGameOver();
+                    return;
                 }
 
-                // the current speed needs to be calculated
-                // every point the intervall is reduced by 5ms till the minimum of 50ms is reached
-                currentSpeed = Math.max(50, initialSpeed - score * 5);
+                // with .unshift(head) the new head is added to the front
+                snake.unshift(head);
+                // THIS IS WORKING FOR STEP 1 AND 2:
+                // with .pop() the last tail segment is removed
+                //snake.pop();
+                // this way the snake keeps the same length
 
-                // and a new food position must be generated
-                // the snake.pop() is not called here and thats why the snake grows 
-                food = generateFood();
+                // FOR STEP 3 moveSnake MUST BE UPDATED BECAUSE THE SNAKE SHOULD GROW:
+                // the function needs to check if the new head position matches the food position 
+                if (head.x === food.x && head.y === food.y){
+                    // if so then the snake ate the food so the score needs to go up by 1
+                    score += 1;
+
+                    // first the current score needs to be updated and displayed on the page
+                    document.getElementById("currentScore").innerText = score;
+
+                    // the score needs to be checked
+                    // so if the current score is bigger then the highscore then the highscore i sthe current score
+                    if (score > highScore) {
+                        highScore = score;
+                        localStorage.setItem("snakeHighScore", highScore);
+                        document.getElementById("highScore").innerText = highScore;
+                    }
+
+                    // the current speed needs to be calculated
+                    // every point the intervall is reduced by 5ms till the minimum of 50ms is reached
+                    currentSpeed = Math.max(50, initialSpeed - score * 5);
+
+                    // and a new food position must be generated
+                    // the snake.pop() is not called here and thats why the snake grows 
+                    food = generateFood();
+                }
+                // if the snake did not eat any foot the tail must be removed so it stays the same length
+                else {
+                    snake.pop();
+                }
+
             }
-            // if the snake did not eat any foot the tail must be removed so it stays the same length
-            else {
-                snake.pop();
-            }
 
-        }
-
-        // that the snake really moves foreward on the screen the functions need to be called every 150 ms
-        // it is important to call the drawGame because the array would change internally but the webpage would continue displaying the old frame
-        const gameLoop = () => {
-            if (isGameOver || isPaused){
-                return;
-            }
-            moveSnake();
-            drawGame();
-        };
-        
-        // for step 4 make a variable
-        // so the function gameLoop (which contains the moveSnake and drawGame function) is called every 150 ms
-        // startGame();
-        
-        // Attach click event & remove keyboard focus
-        document.getElementById("startBtn").addEventListener("click", (event) => {
-            togglePause();
-            // this prevents the double-triggering because it unfocuses the button
-            //event.target.blur();
-        });
-
-        document.getElementById("restartBtn").addEventListener("click", () => {
-            resetGame();
-        });
-
-
-        // Step 2: Keyboard controls (arrow keys)
-        // the program needs to keep track of the keyboard and which key is pressed. This works the best with an EventListener
-        // he should listen to the entire webpage (thats the document for)and it is triggered when a key is pressed down (keydown - the other option would be keyup)
-        // the event is an object that is automatically created by the browser. He holds the metadata about the key press such as event.key
-        // an eventlistener for the spacebar. if its pressed the pause button is aktivated
-        document.addEventListener("keydown", (event) => {
-            // it checks if the key pressed was the spacebar
-            if (event.key === " " || event.code === "Space"){
-                // if so then the default action of the webbrowser is stopped
-                event.preventDefault();
-                // the fucntion for handling the pasuing and unpausing is called
+            // that the snake really moves foreward on the screen the functions need to be called every 150 ms
+            // it is important to call the drawGame because the array would change internally but the webpage would continue displaying the old frame
+            const gameLoop = () => {
+                if (isGameOver || isPaused){
+                    return;
+                }
+                moveSnake();
+                drawGame();
+            };
+            
+            // for step 4 make a variable
+            // so the function gameLoop (which contains the moveSnake and drawGame function) is called every 150 ms
+            // startGame();
+            
+            // Attach click event & remove keyboard focus
+            document.getElementById("startBtn").addEventListener("click", (event) => {
                 togglePause();
-                return
-            }
+                // this prevents the double-triggering because it unfocuses the button
+                //event.target.blur();
+            });
+
+            document.getElementById("restartBtn").addEventListener("click", () => {
+                resetGame(true);
+            });
+
+
+            // Step 2: Keyboard controls (arrow keys)
+            // the program needs to keep track of the keyboard and which key is pressed. This works the best with an EventListener
+            // he should listen to the entire webpage (thats the document for)and it is triggered when a key is pressed down (keydown - the other option would be keyup)
+            // the event is an object that is automatically created by the browser. He holds the metadata about the key press such as event.key
+            // an eventlistener for the spacebar. if its pressed the pause button is aktivated
+            document.addEventListener("keydown", (event) => {
+                const gameScreen = document.getElementById("gameScreen");
+                if (!gameScreen.classList.contains("active")) return;
+                
+                // it checks if the key pressed was the spacebar
+                if (event.key === " " || event.code === "Space"){
+                    // if so then the default action of the webbrowser is stopped
+                    event.preventDefault();
+                    // the fucntion for handling the pasuing and unpausing is called
+                    togglePause();
+                    return
+                }
+                
+                
+                // the game should ignore every imput when the game is over
+                if (isGameOver) return;
+                
+                // this checks if the key pressed was the Up Arrow and that the snake is not currently moving down
+                // if boths true then the direction is updated
+                if (event.key === "ArrowUp" && direction.y !== 1){
+                    direction = {x: 0, y: -1};
+                }
+                // this checks if the key pressed was Down Arrow and the snake is not currently moving up
+                // if boths true then the direction is updated
+                else if (event.key === "ArrowDown" && direction.y !== -1){
+                    direction = {x: 0, y: 1};
+                } 
+                // this checks if the key pressed was the Lef Arrow and the snake is not moving right
+                // if boths true then the drection is updated
+                else if (event.key === "ArrowLeft" && direction.x !== 1){
+                    direction = {x: -1, y: 0};
+                }
+                // checks if the key pressed down was Right Arrow and the snake is not moving left
+                // if boths true the direction is updated
+                else if (event.key === "ArrowRight" && direction.x !== -1){
+                    direction = {x: 1, y: 0};
+                }
+            })
+
             
             
-            // the game should ignore every imput when the game is over
-            if (isGameOver) return;
-            
-            // this checks if the key pressed was the Up Arrow and that the snake is not currently moving down
-            // if boths true then the direction is updated
-            if (event.key === "ArrowUp" && direction.y !== 1){
-                direction = {x: 0, y: -1};
-            }
-            // this checks if the key pressed was Down Arrow and the snake is not currently moving up
-            // if boths true then the direction is updated
-            else if (event.key === "ArrowDown" && direction.y !== -1){
-                direction = {x: 0, y: 1};
-            } 
-            // this checks if the key pressed was the Lef Arrow and the snake is not moving right
-            // if boths true then the drection is updated
-            else if (event.key === "ArrowLeft" && direction.x !== 1){
-                direction = {x: -1, y: 0};
-            }
-            // checks if the key pressed down was Right Arrow and the snake is not moving left
-            // if boths true the direction is updated
-            else if (event.key === "ArrowRight" && direction.x !== -1){
-                direction = {x: 1, y: 0};
-            }
-        })
 
-        
-        
+            // Display start prompt on screen load
+            document.getElementById("info").innerText = "Press Spacebar or click Start to begin!";
+            drawGame(); // Render initial snake and food setup
 
-        // Display start prompt on screen load
-        document.getElementById("info").innerText = "Press Spacebar or click Start to begin!";
-        drawGame(); // Render initial snake and food setup
+            // Step 4: Game over
+            // Step 5: Improvements
+            //
+            // ===================================
 
-        // Step 4: Game over
-        // Step 5: Improvements
-        //
-        // ===================================
-
-    </script>
+        </script>
+    </div>
 </body>
 </html>
