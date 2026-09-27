@@ -37,9 +37,23 @@
     <div id="gameScreen" class="screen">
         <h1>Let's Play</h1>
         
-        <!-- this creates the 400x400 grid canvas where the game is drawn -->
-        <canvas id="gameCanvas" width="400"
-                height="400"></canvas>
+        <div class="canvas-container" style="position: relative; display: inline-block;">
+            <!-- this creates the 400x400 grid canvas where the game is drawn -->
+            <canvas id="gameCanvas" width="400" height="400"></canvas>
+            
+            <!-- Game Over Banner -->
+            <div id="gameOverModal" class="game-over-banner" style="display: none;">
+                <h2>GAME OVER!</h2>
+                <p>You lost! 🐍</p>
+                <p>Final score: <span id="finalScore">0</span></p>
+                
+                <!-- a restart button -->
+                <button id="restartBtn" class="btn btn-restart">Play Again</button>
+                
+            </div>
+        </div>
+
+        
         
         <!-- a paragraph (now empty) to display information (score or game) over messages -->
         <p id="info"></p>
@@ -47,8 +61,6 @@
         <!-- grouped the buttons together a start/pause button and a restart button -->
         <div id="controls" class ="control-group">
             <button id="startBtn" class="btn btn-game-control">Start</button>
-            <!-- a restart button -->
-            <button id="restartBtn" class="btn btn-restart" style="display: none;">Restart Game</button>
         </div>
 
         <!-- Score Board Container -->
@@ -227,10 +239,18 @@
             const handleGameOver = () => {
                 isGameOver = true;
                 clearInterval(gameInterval);
-                document.getElementById("info").innerText = `Game Over! Final Score: ${score}.`;
+
+                // the final scroe should be visible for the function to diplay it in the banner
+                document.getElementById("finalScore").innerText = score;
+
+                // The overlay banner should be displayed
+                document.getElementById("gameOverModal").style.display = "block";
+
+
+                //document.getElementById("info").innerText = `Game Over! Final Score: ${score}.`;
                 // the reset button should be displayed when the game is over and the startBtn should be hidden
-                document.getElementById("startBtn").style.display = "none";
-                document.getElementById("restartBtn").style.display = "inline-block";
+                //document.getElementById("startBtn").style.display = "none";
+                //document.getElementById("restartBtn").style.display = "inline-block";
             };
 
             // if you then press the space button on your keyboard you restart the game
@@ -238,6 +258,10 @@
             const resetGame = (autoStart = false) => {
                 isGameOver = false;
                 clearInterval(gameInterval);
+
+                // Hide the overlay banner
+                document.getElementById("gameOverModal").style.display = "none";
+
                 snake = [
                     { x: 10, y: 10 },
                     { x: 9, y: 10 },
@@ -257,9 +281,9 @@
                 // the score needs to be resetted too 
                 document.getElementById("currentScore").innerText = score;
                 // the pause/start button needs to be visible again
-                document.getElementById("startBtn").style.display = "inline-block";
+                //document.getElementById("startBtn").style.display = "inline-block";
                 // the reset button needs to be hidden again when the game starts
-                document.getElementById("restartBtn").style.display = "none";
+                //document.getElementById("restartBtn").style.display = "none";
 
                 if (autoStart){
                     isPaused = false;

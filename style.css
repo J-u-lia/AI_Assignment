@@ -117,14 +117,23 @@ canvas{
 
 /* STYLING THE Restart BUTTON */
 .btn-restart {
-    background-color: transparent;
-    border: 2px solid #e74c3c; /* Red border accent for restarting */
+    background-color: #ffffff;
     color: #e74c3c;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 .btn-restart:hover {
-    background-color: #e74c3c;
-    color: #ffffff;
+    background-color: #f1f1f1;
+    color: #c0392b;
+    transform: scale(1.05);
 }
 
 .btn-primary{
@@ -165,3 +174,39 @@ canvas{
     gap: 10px;
     margin-bottom: 5px;
 }
+
+/* styling the Game Over Banner */
+.game-over-banner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #e74c3c; /* Red background */
+    color: white;
+    padding: 20px 40px;
+    border-radius: 14px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    z-index: 10;
+    width: 95%;
+    max-width: 550px;
+    animation: popIn 0.6s ease-out;
+}
+
+.game-over-banner h2 {
+    margin: 0 0 15px 0;
+    font-size: 36px;
+    letter-spacing: 2px;
+}
+
+.game-over-banner p {
+    margin: 8px 0;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+@keyframes popIn {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
