@@ -326,7 +326,11 @@
 
                     // the current speed needs to be calculated
                     // every point the intervall is reduced by 5ms till the minimum of 50ms is reached
-                    currentSpeed = Math.max(50, initialSpeed - score * 5);
+                    currentSpeed = Math.max(50, initialSpeed - score * 10);
+
+                    clearInterval(gameInterval);
+                    gameInterval = setInterval(gameLoop, currentSpeed);
+                    
 
                     // and a new food position must be generated
                     // the snake.pop() is not called here and thats why the snake grows 
