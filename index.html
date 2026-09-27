@@ -30,6 +30,22 @@
                 </ul>
             </div>
 
+            <div class="difficulty-group">
+                <label for="difficultySelect">Select Difficulty:</label>
+                <select id="difficultySelect" class="difficulty-dropdown">
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                    <option value="ultra">Ultra Hard</option>
+                </select>
+
+                <!-- a little discribing text for the levels.
+                 it is changable and depends on which level was selected-->
+                <p id="difficultyInfo" class="difficulty-info-box">
+                    Grid lines enabled. Speed increases by +5ms per apple.
+                </p>
+
+            </div>
         </div>
     </div>
 
@@ -37,6 +53,47 @@
     <div id="gameScreen" class="screen">
         <h1>Let's Play</h1>
         
+        <h3 id="currentDifficultySubheader" style="color: #3498db; margin-bottom: 10px;">
+            You have selected the Mode Easy
+        </h3>
+        <!-- a text and button to change the mode inside the game site-->
+        <div class="change-mode-container" style="margin-top: 10px;">
+            <span>Want to change?</span>
+            <button id="openModeModalBtn" class="btn btn-outline" style="padding: 4px 10px; margin-left: 8px;">Mode</button>
+        </div>
+
+        <!-- a radio button to -->
+        <div id="modeModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content subtle-banner">
+                <h3>Change Game Mode</h3>
+                <p class="modal-subtitle">Select your preferred difficulty setting:</p>
+                
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="modalDifficulty" value="easy" checked>
+                        <span><strong>Easy</strong> — Grid lines on, slow speed curve</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="modalDifficulty" value="medium">
+                        <span><strong>Medium</strong> — Standard speed, grid off</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="modalDifficulty" value="hard">
+                        <span><strong>Hard</strong> — Fast speed increase</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="modalDifficulty" value="ultra">
+                        <span><strong>Ultra Hard</strong> — Apples decay quickly</span>
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button id="saveModeBtn" class="btn btn-primary">Apply</button>
+                    <button id="closeModeBtn" class="btn btn-outline">Cancel</button>
+                </div>
+            </div>
+        </div>
+
         <div class="canvas-container" style="position: relative; display: inline-block;">
             <!-- this creates the 400x400 grid canvas where the game is drawn -->
             <canvas id="gameCanvas" width="400" height="400"></canvas>
@@ -73,6 +130,7 @@
     
 
         <script>
+                        
             // first the navigation functions for the switching pages
             const showScreen = (screenName) => {
                 const homeScreen = document.getElementById("homeScreen")
@@ -82,6 +140,7 @@
                     // if you are on the game site then the homeScreen shouldn't be active but the gameScreen
                     homeScreen.classList.remove("active");
                     gameScreen.classList.add("active");
+                    updateGameSubheader()
                     resetGame(false);
                 }
                 else{
@@ -103,8 +162,85 @@
             document.getElementById("homeBtn").addEventListener("click", () => {
                 showScreen('home');
             });
-
             
+            // Function to update the subheader text
+            const updateGameSubheader = (level = currentDifficulty) => {
+                const subheader = document.getElementById("currentDifficultySubheader");
+                if (subheader && difficultyLabels[level]) {
+                    subheader.innerText = difficultyLabels[level];
+                }
+            };
+
+            // logic for the difficulty selection on home screen
+            const difficultyDescriptions = {
+                    easy: "Grid lines enabled. Speed increases by +5ms per apple.",
+                    medium: "No grid lines. Speed increases by +10ms per apple.",
+                    hard: "Faster starting speed and no grid lines. Speed increases by +20ms per apple!",
+                    ultra: "Apples disappear after 2 seconds! Speed increases by +10ms per apple."
+                };
+
+            // Dictionary for formatted subheader labels
+            const difficultyLabels = {
+                easy: "You have selected the Mode Easy",
+                medium: "You have selected the Mode Medium",
+                hard: "You have selected the Mode Hard",
+                ultra: "You have selected the Mode Ultra Hard"
+            };
+
+                       
+            document.getElementById("difficultySelect").addEventListener("change", (e) => {
+                // setDifficulty(e.target.value);
+                
+                const selectedLevel = e.target.value;
+                
+                // Update active difficulty in game logic
+                setDifficulty(selectedLevel);
+                
+                // Update explanation text on screen
+                document.getElementById("difficultyInfo").innerText = difficultyDescriptions[selectedLevel];
+                
+                // Update game screen subheader
+                updateGameSubheader(selectedLevel);
+            });
+
+            // the logic for the mode selection on the game site
+            const modeModal = document.getElementById("modeModal");
+            const openModeBtn = document.getElementById("openModeModalBtn");
+            const closeModeBtn = document.getElementById("closeModeBtn");
+            const saveModeBtn = document.getElementById("saveModeBtn");
+            const difficultySelect = document.getElementById("difficultySelect");
+
+            // open the modal and set radio selection to match current dropdown state
+            openModeBtn.addEventListener("click", () => {
+                const currentValue = difficultySelect.value;
+                const currentRadio = document.querySelector(`input[name="modalDifficulty"][value="${currentValue}"]`);
+                if (currentRadio) currentRadio.checked = true;
+                
+                modeModal.style.display = "flex";
+            });
+
+            // Close the modal on cancel button
+            closeModeBtn.addEventListener("click", () => {
+                modeModal.style.display = "none";
+            });
+
+            // Save the selection, update teh dropdown, set the game difficulty and update text
+            saveModeBtn.addEventListener("click", () => {
+                const selectedRadio = document.querySelector('input[name="modalDifficulty"]:checked');
+                if (selectedRadio) {
+                    const selectedValue = selectedRadio.value;
+                    
+                    // Sync with primary select dropdown
+                    difficultySelect.value = selectedValue;
+                    
+                    // Apply game logic and UI updates
+                    setDifficulty(selectedValue);
+                    document.getElementById("difficultyInfo").innerText = difficultyDescriptions[selectedValue];
+                    updateGameSubheader(selectedValue);
+                }
+                modeModal.style.display = "none";
+            });
+
 
             // ===== GAME SETUP =====
             // the canvas & the cts select the html canvas element and gets it 2D rendering context
@@ -123,10 +259,11 @@
             const generateFood = () => {
                 return {
                     x: Math.floor(Math.random() * tileCount),
-                    y: Math.floor(Math.random() * tileCount)
+                    y: Math.floor(Math.random() * tileCount),
+                    // for the ultra hard mode
+                    visible: true
                 };
             };
-            
             
             // this makes an array of coordinate objects. They represent the segments
             // Segment 0 so x:10, y:10 is the head
@@ -144,6 +281,8 @@
 
             // the food positon and the score need to be initialized 
             let food = generateFood();
+            // the timer reference for disappearing  food
+            let foodTimer = null;
             let score = 0;
 
             // set the highScore and the currentSpeed variables
@@ -161,6 +300,8 @@
             let initialSpeed = 150; // Startgeschwindigkeit in ms
             let currentSpeed = initialSpeed;
 
+            let currentDifficulty = 'easy';
+
             // i want that the game only starts when the player wants to so if he presses the start/pause button
             let isPaused = true;
             // to track the state of the game
@@ -171,16 +312,23 @@
                 // first you want to erase the entire board before drawing a new frame
                 ctx.clearRect(0, 0,
                     canvas.width, canvas.height);
+                
+                // for the easy mode the grid lines
+                drawGrid()
 
-                ctx.fillStyle = "red";
-                // this multiplies the grid coordinates by the gridSize to render squares for food and snake segments
-                // so for example tile 10 becomes pixel 200
-                ctx.fillRect(
-                    food.x * gridSize,
-                    food.y * gridSize,
-                    gridSize, gridSize
-                );
-
+                // the food should only be drawn if visible
+                if (food.visible){
+                    ctx.fillStyle = "red";
+                    // this multiplies the grid coordinates by the gridSize to render squares for food and snake segments
+                    // so for example tile 10 becomes pixel 200
+                    ctx.fillRect(
+                        food.x * gridSize,
+                        food.y * gridSize,
+                        gridSize, gridSize
+                    );
+                }
+                
+                // draw the snake
                 ctx.fillStyle = snakeColor;
                 for (const segment of snake) {
                     ctx.fillRect(
@@ -239,6 +387,8 @@
             const handleGameOver = () => {
                 isGameOver = true;
                 clearInterval(gameInterval);
+                // for the ultra hard mode
+                if (foodTimer) clearTimeout(foodTimer);
 
                 // the final scroe should be visible for the function to diplay it in the banner
                 document.getElementById("finalScore").innerText = score;
@@ -261,6 +411,10 @@
 
                 // Hide the overlay banner
                 document.getElementById("gameOverModal").style.display = "none";
+                
+                // the current difficulty needs to be applied
+                setDifficulty(currentDifficulty);
+                updateGameSubheader(currentDifficulty);
 
                 snake = [
                     { x: 10, y: 10 },
@@ -272,8 +426,7 @@
 
                 // the speed needs to be resettet too
                 currentSpeed = initialSpeed;
-
-                food = generateFood();
+                spawnFood();
 
                 // pick a new random color for every new run
                 snakeColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
@@ -348,9 +501,16 @@
                         document.getElementById("highScore").innerText = highScore;
                     }
 
+                    // the speed decrease should be based on selection of the difficulty level
+                    let speedDecrease = 5;
+                    if (currentDifficulty === "easy") speedDecrease = 5;
+                    else if (currentDifficulty === "medium") speedDecrease = 10;
+                    else if (currentDifficulty === "hard") speedDecrease = 20;
+                    else if (currentDifficulty === "ultra") speedDecrease = 10;
+
                     // the current speed needs to be calculated
                     // every point the intervall is reduced by 5ms till the minimum of 50ms is reached
-                    currentSpeed = Math.max(50, initialSpeed - score * 10);
+                    currentSpeed = Math.max(30, initialSpeed - (score * speedDecrease));
 
                     clearInterval(gameInterval);
                     gameInterval = setInterval(gameLoop, currentSpeed);
@@ -358,7 +518,7 @@
 
                     // and a new food position must be generated
                     // the snake.pop() is not called here and thats why the snake grows 
-                    food = generateFood();
+                    spawnFood();
                 }
                 // if the snake did not eat any foot the tail must be removed so it stays the same length
                 else {
@@ -437,7 +597,22 @@
                 }
             })
 
-            
+            // to force the canvas redraw the modal save needs to be updated with the listener
+            saveModeBtn.addEventListener("click", () =>{
+                const selectedRadio = document.querySelector('input[name="modalDifficulty"]:checked');
+                if (selectedRadio) {
+                    const selectedValue = selectedRadio.value;
+                    difficultySelect.value = selectedValue;
+                    
+                    setDifficulty(selectedValue);
+                    document.getElementById("difficultyInfo").innerText = difficultyDescriptions[selectedValue];
+                    updateGameSubheader(selectedValue);
+                    
+                    // Redraw canvas to update grid visibility immediately
+                    drawGame();
+                }
+                modeModal.style.display = "none";
+            })
             
 
             // Display start prompt on screen load
@@ -446,8 +621,67 @@
 
             // Step 4: Game over
             // Step 5: Improvements
-            //
-            // ===================================
+            
+            // DIFFICULT FUNCTIONS
+        
+            function setDifficulty(level){
+                // a function to select the level
+                currentDifficulty = level;
+                if (level === "easy") initialSpeed = 160;
+                else if (level === "medium") initialSpeed = 140;
+                else if (level === "hard") initialSpeed = 110;
+                else if (level === "ultra") initialSpeed = 130;
+                
+                currentSpeed = initialSpeed;
+
+                // clear any active timer for the food when switching the mode
+                if (foodTimer) clearTimeout(foodTimer);
+
+                if (!isPaused && !isGameOver){
+                    clearInterval(gameInterval);
+                    startGame();
+                }
+            }
+
+            function drawGrid() {
+                // a function that draws the grid if the mode is easy
+                if (currentDifficulty !== "easy") return;
+
+                // first the color and 1 pixel linewidth is defined
+                ctx.strokeStyle = "#ccc";
+                ctx.lineWidth = 1;
+                ctx.beginPath(); // Start one single path
+
+                for (let i = 0; i <= tileCount; i++) {
+                    const position = i * gridSize;
+
+                    // Vertical line
+                    // ctx.moveTo() moves the "pencil" to a position but without drawing a line
+                    ctx.moveTo(position, 0);
+                    // then with lineTo the line from the current Position to the specified posititon is being drawed
+                    ctx.lineTo(position, canvas.height);
+
+                    // Horizontal line
+                    ctx.moveTo(0, position);
+                    ctx.lineTo(canvas.width, position);
+                }
+
+                ctx.stroke(); // Draw all lines in one single call
+            }
+
+            function spawnFood() {
+                food = generateFood();
+                
+                if (foodTimer) clearTimeout(foodTimer);
+
+                if (currentDifficulty === "ultra") {
+                    foodTimer = setTimeout(() => {
+                        food.visible = false;
+                        // refresh frame to remove visual food instantly
+                        drawGame();
+                    }, 2000);
+                }
+            }
 
         </script>
     </div>
