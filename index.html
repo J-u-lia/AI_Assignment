@@ -10,132 +10,146 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="app">
+        <!-- first define the home page - it is a full screen -->
+        <div id="homeScreen" class="screen active">
+            <!-- has title and a welcome message-->
+            <div class="home-container">
+                <h1>Welcome to the Snake Game</h1>
 
-    <!-- first define the home page - it is a full screen -->
-    <div id="homeScreen" class="screen full-page active">
-        <!-- has title and a welcome message-->
-        <div class="home-container">
-            <h1>Welcome to the Snake Game</h1>
+                <div class="cozy-intro">
+                    <p>Welcome to the classic arcade playground! Take a break, grab a hot drink, and test your reflexes. Whether you are looking for a quick retro nostalgia fix or a strategic path to master every challenge, you have come to the right place.</p>
+                </div>
+                <!-- a short describing text how to play-->
+                <div class="how-to-play-card">
+                    <h3>How to Play</h3>
+                    <ul>
+                        <li>Use <strong>Arrow Keys</strong> (or WASD) to slither in four directions.</li>
+                        <li>Munch on tasty red apples to grow your tail and rack up high scores.</li>
+                        <li>Watch out for boundary walls, inner obstacles, and your own tail!</li>
+                        <li>Press <strong>Spacebar</strong> whenever you need to pause the action.</li>
+                    </ul>
+                </div>
+                <!-- buttons to select between level and difficulty mode -->
+                <div class="mode-selection-box">
+                    <h3>Choose Your Journey</h3>
+                    <p>How would you like to play today? Dive into a campaign featuring 10 levels that build on one another, each with unique obstacle maps, or play an endless game with custom speed settings.</p>
+                    
+                    <div class="mode-buttons">
+                        <button id="goToLevelModeBtn" class="btn btn-primary btn-large">Level Mode</button>
+                        <button id="goToDifficultyModeBtn" class="btn btn-secondary btn-large">Difficulty Mode</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            <div class="cozy-intro">
-                <p>Welcome to the classic arcade playground! Take a break, grab a hot drink, and test your reflexes. Whether you are looking for a quick retro nostalgia fix or a strategic path to master every challenge, you have come to the right place.</p>
+
+        <!-- there is a screen where you can select the different levels-->
+        <div id="levelSelectScreen" class="screen full-page">
+            <div class="menu-container">
+                <!-- there is also a header and a short text-->
+                <h1>Level Mode</h1>
+                <p class="subtitle">Have fun trying out the different levels! Can you make it all the way to the end level?</p>
+                <!--then there is a grid with two rows ad 5 columns fo the ten levels-->
+                <div class="level-grid">
+                    <!-- Row 1: Levels 1 to 5 -->
+                    <div class="level-row">
+                        <button class="btn btn-level" data-level="1">Level 1</button>
+                        <button class="btn btn-level" data-level="2">Level 2</button>
+                        <button class="btn btn-level" data-level="3">Level 3</button>
+                        <button class="btn btn-level" data-level="4">Level 4</button>
+                        <button class="btn btn-level" data-level="5">Level 5</button>
+                    </div>
+                    <!-- Row 2: Levels 6 to 10 -->
+                    <div class="level-row">
+                        <button class="btn btn-level" data-level="6">Level 6</button>
+                        <button class="btn btn-level" data-level="7">Level 7</button>
+                        <button class="btn btn-level" data-level="8">Level 8</button>
+                        <button class="btn btn-level" data-level="9">Level 9</button>
+                        <button class="btn btn-level" data-level="10">Level 10</button>
+                    </div>
+                </div>
+                <!-- with this button you can go back to the home screen-->
+                <button class="btn btn-outline back-btn" onclick="showScreen('home')">← Back to Home</button>
             </div>
-            <!-- a short describing text how to play-->
-            <div class="how-to-play-card">
-                <h3>How to Play</h3>
-                <ul>
-                    <li>Use <strong>Arrow Keys</strong> (or WASD) to slither in four directions.</li>
-                    <li>Munch on tasty red apples to grow your tail and rack up high scores.</li>
-                    <li>Watch out for boundary walls, inner obstacles, and your own tail!</li>
-                    <li>Press <strong>Spacebar</strong> whenever you need to pause the action.</li>
-                </ul>
+        </div>
+
+        <!-- the level selection and the game screen for the levels are seperate-->
+        <div id="gameScreen" class="screen">
+            <!-- a header -->
+            <h1 id="levelGameHeader">Welcome to Level 1</h1>
+            <!-- the score-->
+            <div class="score-display">
+                Score: <span id="currentScore">0</span> | Target Score: <span id="targetScore">10</span>
             </div>
-            <!-- buttons to select between level and difficulty mode -->
-            <div class="mode-selection-box">
-                <h3>Choose Your Journey</h3>
-                <p>How would you like to play today? Dive into a campaign featuring 10 levels that build on one another, each with unique obstacle maps, or play an endless game with custom speed settings.</p>
+            <!-- the canvas -->
+            <div class="canvas-container">
+                <canvas id="gameCanvas" width="400" height="400"></canvas>
                 
-                <div class="mode-buttons">
-                    <button id="goToLevelModeBtn" class="btn btn-primary btn-large">Level Mode</button>
-                    <button id="goToDifficultyModeBtn" class="btn btn-secondary btn-large">Difficulty Mode</button>
+                <div id="pauseOverlay" class="overlay hidden">
+                    <h3>Paused</h3>
+                    <p>Press Space to Resume</p>
                 </div>
-            </div>
-        </div>
-    </div>
 
-
-    <!-- there is a screen where you can select the different levels-->
-    <div id="levelSelectScreen" class="screen full-page">
-        <div class="menu-container">
-            <!-- there is also a header and a short text-->
-            <h1>Level Mode</h1>
-            <p class="subtitle">Have fun trying out the different levels! Can you make it all the way to the end level?</p>
-            <!--then there is a grid with two rows ad 5 columns fo the ten levels-->
-            <div class="level-grid">
-                <!-- Row 1: Levels 1 to 5 -->
-                <div class="level-row">
-                    <button class="btn btn-level" data-level="1">Level 1</button>
-                    <button class="btn btn-level" data-level="2">Level 2</button>
-                    <button class="btn btn-level" data-level="3">Level 3</button>
-                    <button class="btn btn-level" data-level="4">Level 4</button>
-                    <button class="btn btn-level" data-level="5">Level 5</button>
+                <div id="gameOverOverlay" class="overlay hidden">
+                    <h3>Game Over</h3>
+                    <p>Final Score: <span id="finalScoreDisplay">0</span></p>
+                    <button id="restartBtn" class="btn btn-primary">Play Again</button>
                 </div>
-                <!-- Row 2: Levels 6 to 10 -->
-                <div class="level-row">
-                    <button class="btn btn-level" data-level="6">Level 6</button>
-                    <button class="btn btn-level" data-level="7">Level 7</button>
-                    <button class="btn btn-level" data-level="8">Level 8</button>
-                    <button class="btn btn-level" data-level="9">Level 9</button>
-                    <button class="btn btn-level" data-level="10">Level 10</button>
-                </div>
-            </div>
-            <!-- with this button you can go back to the home screen-->
-            <button class="btn btn-outline back-btn" onclick="showScreen('home')">← Back to Home</button>
-        </div>
-    </div>
-
-    <!-- the level selection and the game screen for the levels are seperate-->
-    <div id="gameScreen" class="screen">
-        <!-- a header -->
-        <h1 id="levelGameHeader">Welcome to Level 1</h1>
-        <!-- the score-->
-        <div class="score-display">
-            Score: <span id="currentScore">0</span> | Target Score: <span id="targetScore">10</span>
-        </div>
-        <!-- the canvas -->
-        <div class="canvas-container">
-            <canvas id="gameCanvas" width="400" height="400"></canvas>
-        </div>
-        <!-- the buttons to control the game -->
-        <div class="game-controls">
-            <button id="startBtn" class="btn btn-primary">Start Level</button>
-            <button class="btn btn-outline" onclick="showScreen('levelSelect')">← Back to Level Select</button>
-        </div>
-    </div>
-
-    <!-- next there is a screen for the difficulty modes-->
-    <div id="difficultySelectScreen" class="screen full-page">
-        <div class="menu-container">
-            <!-- aslo a header-->
-            <h1>Select Your Difficulty Mode</h1>
             
-            <!-- Radio Button Selection above the Canvas -->
-            <div class="radio-difficulty-selector">
-                <label class="radio-card">
-                    <input type="radio" name="gameDifficulty" value="easy" checked>
-                    <span><strong>Easy</strong> (Slow Speed, Grid On)</span>
-                </label>
-                <label class="radio-card">
-                    <input type="radio" name="gameDifficulty" value="medium">
-                    <span><strong>Medium</strong> (Standard Speed)</span>
-                </label>
-                <label class="radio-card">
-                    <input type="radio" name="gameDifficulty" value="hard">
-                    <span><strong>Hard</strong> (Fast Speed)</span>
-                </label>
-                <label class="radio-card">
-                    <input type="radio" name="gameDifficulty" value="ultra">
-                    <span><strong>Ultra Hard</strong> (Extreme Speed)</span>
-                </label>
             </div>
+            <!-- the buttons to control the game -->
+            <div class="game-controls">
+                <button id="startBtn" class="btn btn-primary">Start Level</button>
+                <button class="btn btn-outline" onclick="showScreen('levelSelect')">← Back to Level Select</button>
+                <button id="saveModeBtn" class="btn btn-secondary">Save Progress</button>
+            </div>
+        </div>
 
-            <!-- directly beneath the radio buttons there is the Game -->
-            <div class="game-area">
-                <!-- the game score will be displayed-->
-                <div class="score-display">
-                    Score: <span id="diffCurrentScore">0</span> | High Score: <span id="diffHighScore">0</span>
+        <!-- next there is a screen for the difficulty modes-->
+        <div id="difficultySelectScreen" class="screen full-page">
+            <div class="menu-container">
+                <!-- aslo a header-->
+                <h1>Select Your Difficulty Mode</h1>
+                
+                <!-- Radio Button Selection above the Canvas -->
+                <div class="radio-difficulty-selector">
+                    <label class="radio-card">
+                        <input type="radio" name="gameDifficulty" value="easy" checked>
+                        <span><strong>Easy</strong> (Slow Speed, Grid On)</span>
+                    </label>
+                    <label class="radio-card">
+                        <input type="radio" name="gameDifficulty" value="medium">
+                        <span><strong>Medium</strong> (Standard Speed)</span>
+                    </label>
+                    <label class="radio-card">
+                        <input type="radio" name="gameDifficulty" value="hard">
+                        <span><strong>Hard</strong> (Fast Speed)</span>
+                    </label>
+                    <label class="radio-card">
+                        <input type="radio" name="gameDifficulty" value="ultra">
+                        <span><strong>Ultra Hard</strong> (Extreme Speed)</span>
+                    </label>
                 </div>
-                <!-- the canvas -->
-                <div class="canvas-container">
-                    <canvas id="diffGameCanvas" width="400" height="400"></canvas>
+
+                <!-- directly beneath the radio buttons there is the Game -->
+                <div class="game-area">
+                    <!-- the game score will be displayed-->
+                    <div class="score-display">
+                        Score: <span id="diffCurrentScore">0</span> | High Score: <span id="diffHighScore">0</span>
+                    </div>
+                    <!-- the canvas -->
+                    <div class="canvas-container">
+                        <canvas id="diffGameCanvas" width="400" height="400"></canvas>
+                    </div>
+                    <!-- buttons to control the game-->
+                    <div class="game-controls">
+                        <button id="diffStartBtn" class="btn btn-primary">Start Game</button>
+                        <button class="btn btn-outline" onclick="showScreen('home')">← Back to Home</button>
+                    </div>
                 </div>
-                <!-- buttons to control the game-->
-                <div class="game-controls">
-                    <button id="diffStartBtn" class="btn btn-primary">Start Game</button>
-                    <button class="btn btn-outline" onclick="showScreen('home')">← Back to Home</button>
-                </div>
+                <button class="btn btn-outline" onclick="showScreen('home')">← Back to Home</button>
             </div>
-            <button class="btn btn-outline" onclick="showScreen('home')">← Back to Home</button>
         </div>
     </div>
 
