@@ -11,684 +11,137 @@
 </head>
 <body>
 
-    <!-- first define the home page -->
-    <div id="homeScreen" class="screen active">
-        <div class="card">
-            <!-- a title and a short description of how the game works plus a button to get to the game-->
+    <!-- first define the home page - it is a full screen -->
+    <div id="homeScreen" class="screen full-page active">
+        <!-- has title and a welcome message-->
+        <div class="home-container">
             <h1>Welcome to the Snake Game</h1>
-            <p>In order to play the game click on the following button:</p>
 
-            <button class="btn btn-primary" id="letsPlayBtn">Let's Play</button>
-
-            <div class="description-box">
-                <h3>How to Play:</h3>
+            <div class="cozy-intro">
+                <p>Welcome to the classic arcade playground! Take a break, grab a hot drink, and test your reflexes. Whether you are looking for a quick retro nostalgia fix or a strategic path to master every challenge, you have come to the right place.</p>
+            </div>
+        </div>
+            <!-- a short describing text how to play-->
+            <div class="how-to-play-card">
+                <h3>How to Play</h3>
                 <ul>
-                    <li>Use <strong>Arrow Keys</strong> to control direction.</li>
-                    <li>Eat red apples to grow and raise your score.</li>
-                    <li>Avoid running into walls or your own tail!</li>
-                    <li>Press <strong>Spacebar</strong> to Pause/Resume at any time.</li>
+                    <li>Use <strong>Arrow Keys</strong> (or WASD) to slither in four directions.</li>
+                    <li>Munch on tasty red apples to grow your tail and rack up high scores.</li>
+                    <li>Watch out for boundary walls, inner obstacles, and your own tail!</li>
+                    <li>Press <strong>Spacebar</strong> whenever you need to pause the action.</li>
                 </ul>
             </div>
-
-            <div class="difficulty-group">
-                <label for="difficultySelect">Select Difficulty:</label>
-                <select id="difficultySelect" class="difficulty-dropdown">
-                    <option value="easy">Easy</option>
-                    <option value="medium">Medium</option>
-                    <option value="hard">Hard</option>
-                    <option value="ultra">Ultra Hard</option>
-                </select>
-
-                <!-- a little discribing text for the levels.
-                 it is changable and depends on which level was selected-->
-                <p id="difficultyInfo" class="difficulty-info-box">
-                    Grid lines enabled. Speed increases by +5ms per apple.
-                </p>
-
+            <!-- buttons to select between level and difficulty mode -->
+            <div class="mode-selection-box">
+                <h3>Choose Your Journey</h3>
+                <p>How would you like to play today? Dive into a campaign featuring 10 levels that build on one another, each with unique obstacle maps, or play an endless game with custom speed settings.</p>
+                
+                <div class="mode-buttons">
+                    <button id="goToLevelModeBtn" class="btn btn-primary btn-large">Level Mode</button>
+                    <button id="goToDifficultyModeBtn" class="btn btn-secondary btn-large">Difficulty Mode</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- and then the second screen where the game is-->
+
+    <!-- there is a screen where you can select the different levels-->
+    <div id="levelSelectScreen" class="screen full-page">
+        <div class="menu-container">
+            <!-- there is also a header and a short text-->
+            <h1>Level Mode</h1>
+            <p class="subtitle">Have fun trying out the different levels! Can you make it all the way to the end level?</p>
+            <!--then there is a grid with two rows ad 5 columns fo the ten levels-->
+            <div class="level-grid">
+                <!-- Row 1: Levels 1 to 5 -->
+                <div class="level-row">
+                    <button class="btn btn-level" data-level="1">Level 1</button>
+                    <button class="btn btn-level" data-level="2">Level 2</button>
+                    <button class="btn btn-level" data-level="3">Level 3</button>
+                    <button class="btn btn-level" data-level="4">Level 4</button>
+                    <button class="btn btn-level" data-level="5">Level 5</button>
+                </div>
+                <!-- Row 2: Levels 6 to 10 -->
+                <div class="level-row">
+                    <button class="btn btn-level" data-level="6">Level 6</button>
+                    <button class="btn btn-level" data-level="7">Level 7</button>
+                    <button class="btn btn-level" data-level="8">Level 8</button>
+                    <button class="btn btn-level" data-level="9">Level 9</button>
+                    <button class="btn btn-level" data-level="10">Level 10</button>
+                </div>
+            </div>
+            <!-- with this button you can go back to the home screen-->
+            <button class="btn btn-outline back-btn" onclick="showScreen('home')">← Back to Home</button>
+        </div>
+    </div>
+
+    <!-- the level selection and the game screen for the levels are seperate-->
     <div id="gameScreen" class="screen">
-        <h1>Let's Play</h1>
-        
-        <h3 id="currentDifficultySubheader" style="color: #3498db; margin-bottom: 10px;">
-            You have selected the Mode Easy
-        </h3>
-        <!-- a text and button to change the mode inside the game site-->
-        <div class="change-mode-container" style="margin-top: 10px;">
-            <span>Want to change?</span>
-            <button id="openModeModalBtn" class="btn btn-outline" style="padding: 4px 10px; margin-left: 8px;">Mode</button>
+        <!-- a header -->
+        <h1 id="levelGameHeader">Welcome to Level 1</h1>
+        <!-- the score-->
+        <div class="score-display">
+            Score: <span id="currentScore">0</span> | Target Score: <span id="targetScore">10</span>
         </div>
-
-        <!-- a radio button to -->
-        <div id="modeModal" class="modal-overlay" style="display: none;">
-            <div class="modal-content subtle-banner">
-                <h3>Change Game Mode</h3>
-                <p class="modal-subtitle">Select your preferred difficulty setting:</p>
-                
-                <div class="radio-group">
-                    <label class="radio-option">
-                        <input type="radio" name="modalDifficulty" value="easy" checked>
-                        <span><strong>Easy</strong> — Grid lines on, slow speed curve</span>
-                    </label>
-                    <label class="radio-option">
-                        <input type="radio" name="modalDifficulty" value="medium">
-                        <span><strong>Medium</strong> — Standard speed, grid off</span>
-                    </label>
-                    <label class="radio-option">
-                        <input type="radio" name="modalDifficulty" value="hard">
-                        <span><strong>Hard</strong> — Fast speed increase</span>
-                    </label>
-                    <label class="radio-option">
-                        <input type="radio" name="modalDifficulty" value="ultra">
-                        <span><strong>Ultra Hard</strong> — Apples decay quickly</span>
-                    </label>
-                </div>
-
-                <div class="modal-actions">
-                    <button id="saveModeBtn" class="btn btn-primary">Apply</button>
-                    <button id="closeModeBtn" class="btn btn-outline">Cancel</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="canvas-container" style="position: relative; display: inline-block;">
-            <!-- this creates the 400x400 grid canvas where the game is drawn -->
+        <!-- the canvas -->
+        <div class="canvas-container">
             <canvas id="gameCanvas" width="400" height="400"></canvas>
+        </div>
+        <!-- the buttons to control the game -->
+        <div class="game-controls">
+            <button id="startBtn" class="btn btn-primary">Start Level</button>
+            <button class="btn btn-outline" onclick="showScreen('levelSelect')">← Back to Level Select</button>
+        </div>
+    </div>
+
+    <!-- next there is a screen for the difficulty modes-->
+    <div id="difficultySelectScreen" class="screen full-page">
+        <div class="menu-container">
+            <!-- aslo a header-->
+            <h1>Select Your Difficulty Mode</h1>
             
-            <!-- Game Over Banner -->
-            <div id="gameOverModal" class="game-over-banner" style="display: none;">
-                <h2>GAME OVER!</h2>
-                <p>You lost! 🐍</p>
-                <p>Final score: <span id="finalScore">0</span></p>
-                
-                <!-- a restart button -->
-                <button id="restartBtn" class="btn btn-restart">Play Again</button>
-                
+            <!-- Radio Button Selection above the Canvas -->
+            <div class="radio-difficulty-selector">
+                <label class="radio-card">
+                    <input type="radio" name="gameDifficulty" value="easy" checked>
+                    <span><strong>Easy</strong> (Slow Speed, Grid On)</span>
+                </label>
+                <label class="radio-card">
+                    <input type="radio" name="gameDifficulty" value="medium">
+                    <span><strong>Medium</strong> (Standard Speed)</span>
+                </label>
+                <label class="radio-card">
+                    <input type="radio" name="gameDifficulty" value="hard">
+                    <span><strong>Hard</strong> (Fast Speed)</span>
+                </label>
+                <label class="radio-card">
+                    <input type="radio" name="gameDifficulty" value="ultra">
+                    <span><strong>Ultra Hard</strong> (Extreme Speed)</span>
+                </label>
+            </div>
+
+            <!-- directly beneath the radio buttons there is the Game -->
+            <div class="game-area">
+                <!-- the game score will be displayed-->
+                <div class="score-display">
+                    Score: <span id="diffCurrentScore">0</span> | High Score: <span id="diffHighScore">0</span>
+                </div>
+                <!-- the canvas -->
+                <div class="canvas-container">
+                    <canvas id="diffGameCanvas" width="400" height="400"></canvas>
+                </div>
+                <!-- buttons to control the game-->
+                <div class="game-controls">
+                    <button id="diffStartBtn" class="btn btn-primary">Start Game</button>
+                    <button class="btn btn-outline" onclick="showScreen('home')">← Back to Home</button>
+                </div>
             </div>
         </div>
-
-        
-        
-        <!-- a paragraph (now empty) to display information (score or game) over messages -->
-        <p id="info"></p>
-        
-        <!-- grouped the buttons together a start/pause button and a restart button -->
-        <div id="controls" class ="control-group">
-            <button id="startBtn" class="btn btn-game-control">Start</button>
-        </div>
-
-        <!-- Score Board Container -->
-        <div id="scoreBoard" style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">
-            Score: <span id="currentScore">0</span> | High Score: <span id="highScore">0</span>
-        </div>
-
-        <button id="homeBtn" class="btn btn-outline"> ← Back to Home </button>
+    </div>
 
     
-
-        <script>
-                        
-            // first the navigation functions for the switching pages
-            const showScreen = (screenName) => {
-                const homeScreen = document.getElementById("homeScreen")
-                const gameScreen = document.getElementById("gameScreen");
-            
-                if (screenName === 'game'){
-                    // if you are on the game site then the homeScreen shouldn't be active but the gameScreen
-                    homeScreen.classList.remove("active");
-                    gameScreen.classList.add("active");
-                    updateGameSubheader()
-                    resetGame(false);
-                }
-                else{
-                    // if you are not on the game site then the gameScreen shouldn't be active but the homeScreen
-                    gameScreen.classList.remove("active");
-                    homeScreen.classList.add("active");
-                    if (!isPaused && !isGameOver){
-                        togglePause();
-                    }
-                }
-            };
-
-            // if you press on the letsPlayBtn then the site should switch to the game site
-            document.getElementById("letsPlayBtn").addEventListener("click", () => {
-                showScreen('game');
-            });
-
-            // if you have pressed the homeBtn then switch it to home screen
-            document.getElementById("homeBtn").addEventListener("click", () => {
-                showScreen('home');
-            });
-            
-            // Function to update the subheader text
-            const updateGameSubheader = (level = currentDifficulty) => {
-                const subheader = document.getElementById("currentDifficultySubheader");
-                if (subheader && difficultyLabels[level]) {
-                    subheader.innerText = difficultyLabels[level];
-                }
-            };
-
-            // logic for the difficulty selection on home screen
-            const difficultyDescriptions = {
-                    easy: "Grid lines enabled. Speed increases by +5ms per apple.",
-                    medium: "No grid lines. Speed increases by +10ms per apple.",
-                    hard: "Faster starting speed and no grid lines. Speed increases by +20ms per apple!",
-                    ultra: "Apples disappear after 2 seconds! Speed increases by +10ms per apple."
-                };
-
-            // Dictionary for formatted subheader labels
-            const difficultyLabels = {
-                easy: "You have selected the Mode Easy",
-                medium: "You have selected the Mode Medium",
-                hard: "You have selected the Mode Hard",
-                ultra: "You have selected the Mode Ultra Hard"
-            };
-
-                       
-            document.getElementById("difficultySelect").addEventListener("change", (e) => {
-                // setDifficulty(e.target.value);
-                
-                const selectedLevel = e.target.value;
-                
-                // Update active difficulty in game logic
-                setDifficulty(selectedLevel);
-                
-                // Update explanation text on screen
-                document.getElementById("difficultyInfo").innerText = difficultyDescriptions[selectedLevel];
-                
-                // Update game screen subheader
-                updateGameSubheader(selectedLevel);
-            });
-
-            // the logic for the mode selection on the game site
-            const modeModal = document.getElementById("modeModal");
-            const openModeBtn = document.getElementById("openModeModalBtn");
-            const closeModeBtn = document.getElementById("closeModeBtn");
-            const saveModeBtn = document.getElementById("saveModeBtn");
-            const difficultySelect = document.getElementById("difficultySelect");
-
-            // open the modal and set radio selection to match current dropdown state
-            openModeBtn.addEventListener("click", () => {
-                const currentValue = difficultySelect.value;
-                const currentRadio = document.querySelector(`input[name="modalDifficulty"][value="${currentValue}"]`);
-                if (currentRadio) currentRadio.checked = true;
-                
-                modeModal.style.display = "flex";
-            });
-
-            // Close the modal on cancel button
-            closeModeBtn.addEventListener("click", () => {
-                modeModal.style.display = "none";
-            });
-
-            // Save the selection, update teh dropdown, set the game difficulty and update text
-            saveModeBtn.addEventListener("click", () => {
-                const selectedRadio = document.querySelector('input[name="modalDifficulty"]:checked');
-                if (selectedRadio) {
-                    const selectedValue = selectedRadio.value;
-                    
-                    // Sync with primary select dropdown
-                    difficultySelect.value = selectedValue;
-                    
-                    // Apply game logic and UI updates
-                    setDifficulty(selectedValue);
-                    document.getElementById("difficultyInfo").innerText = difficultyDescriptions[selectedValue];
-                    updateGameSubheader(selectedValue);
-                }
-                modeModal.style.display = "none";
-            });
-
-
-            // ===== GAME SETUP =====
-            // the canvas & the cts select the html canvas element and gets it 2D rendering context
-            // it is used to draw shapes
-            const canvas =
-                document.getElementById("gameCanvas");
-            const ctx = canvas.getContext("2d");
-            // this divides the screen into 20x20 pixel tiles
-            const gridSize = 20;
-            // the board is 20 tiles wide and 20 tiles high so 400/20 = 20 and the count is 20
-            const tileCount = canvas.width / gridSize;
-
-            // ===== INITIAL STATE VARIABLES =====
-            // Step 3: Eating and growing
-            // first create a function that generates the food at random coordinates inside the grid
-            const generateFood = () => {
-                // creating two empty containers
-                // outside of the do while block so they are being reused every time the loop tries a new random position
-                let x, y;
-                // pick a random x and y spot on the board as long as they match any segment of the snake
-                // if they don't match the snake make that x and y position to the new position of the food  
-                do {
-                    x = Math.floor(Math.random() * tileCount);
-                    y = Math.floor(Math.random() * tileCount);
-                } while (snake.some(segment => segment.x === x && segment.y === y));
-
-                return { x, y, visible: true };
-            };
-            
-            // this makes an array of coordinate objects. They represent the segments
-            // Segment 0 so x:10, y:10 is the head
-            let snake = [
-                { x: 10, y: 10 },
-                { x: 9, y: 10 },
-                { x: 8, y: 10 }
-            ];
-            // this means it moves right - one unit on the x axis per tick but 0 on y axis
-            let direction = { x: 1, y: 0 };
-            // current position of the apple on the grid - which is just for the step 1 and 2 now at step 3 it should be generated ranodm
-            //let food = { x: 15, y: 15 };
-            // it starts at 0
-            //let score = 0;
-
-            // the food positon and the score need to be initialized 
-            let food = generateFood();
-            // the timer reference for disappearing  food
-            let foodTimer = null;
-            let score = 0;
-
-            // set the highScore and the currentSpeed variables
-            let highScore = localStorage.getItem("snakeHighScore") || 0;
-
-            // Display saved high score on load
-            document.getElementById("highScore").innerText = highScore;
-
-            // array of the different colors for the snake
-            const colorPalette = ["#2ecc71", "#3498db", "#e74c3c", "#9b59b6", "#f39c12", "#1abc9c"];
-            // the color should be randomly selected out of the array
-            let snakeColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
-
-            // Variables for speed settings
-            let initialSpeed = 150; // Startgeschwindigkeit in ms
-            let currentSpeed = initialSpeed;
-
-            let currentDifficulty = 'easy';
-
-            // i want that the game only starts when the player wants to so if he presses the start/pause button
-            let isPaused = true;
-            // to track the state of the game
-            let isGameOver = false;
-
-            // ===== DRAWING FUNCTION =====
-            const drawGame = () => {
-                // first you want to erase the entire board before drawing a new frame
-                ctx.clearRect(0, 0,
-                    canvas.width, canvas.height);
-                
-                // for the easy mode the grid lines
-                drawGrid()
-
-                // the food should only be drawn if visible
-                if (food.visible){
-                    ctx.fillStyle = "red";
-                    // this multiplies the grid coordinates by the gridSize to render squares for food and snake segments
-                    // so for example tile 10 becomes pixel 200
-                    ctx.fillRect(
-                        food.x * gridSize,
-                        food.y * gridSize,
-                        gridSize, gridSize
-                    );
-                }
-                
-                // draw the snake
-                ctx.fillStyle = snakeColor;
-                for (const segment of snake) {
-                    ctx.fillRect(
-                        segment.x * gridSize,
-                        segment.y * gridSize,
-                        gridSize, gridSize
-                    );
-                }
-            };
-            // this is executed once when the page loads
-            // it renders the static snapshot
-            drawGame();
-
-
-            // ===================================
-            // BUILD THE GAME FROM HERE
-            // ===================================
-            //
-            // Use your custom agent in VS Code Chat 
-            // to guide your work through each step. 
-            // Commit regularly.
-            //
-
-            // a global variable as the timer variable
-            let gameInterval;
-            // in order to manage the timers better and safer define a wrapper function
-            const startGame = () =>{
-                clearInterval(gameInterval);
-                gameInterval = setInterval(gameLoop, currentSpeed);
-            };
-
-
-                   
-            // a function to handle what should happen if the game is paused or not
-            const togglePause = () => {
-                // if the game is already over then nothing should happen
-                if (isGameOver) return;
-                // if its pause then it should change its state so not paused
-                isPaused = !isPaused;
-                // if the game is paused it should display the following text
-                if (isPaused){
-                    clearInterval(gameInterval);
-                    document.getElementById("info").innerText = "PAUSED - Press Start or Space to Play";
-                    document.getElementById("startBtn").innerText = "Start";
-                }
-                // if its not paused then the game should start and some other text should be displayed
-                else{
-                    startGame(); // Start interval again
-                    document.getElementById("info").innerText = "";
-                    document.getElementById("startBtn").innerText = "Pause";
-                }
-            };
-
-
-            // this function stops the loop with the clearInterval and then displays a text that the game is over and displays the final score
-            const handleGameOver = () => {
-                isGameOver = true;
-                clearInterval(gameInterval);
-                // for the ultra hard mode
-                if (foodTimer) clearTimeout(foodTimer);
-
-                // the final scroe should be visible for the function to diplay it in the banner
-                document.getElementById("finalScore").innerText = score;
-
-                // The overlay banner should be displayed
-                document.getElementById("gameOverModal").style.display = "block";
-
-
-                //document.getElementById("info").innerText = `Game Over! Final Score: ${score}.`;
-                // the reset button should be displayed when the game is over and the startBtn should be hidden
-                //document.getElementById("startBtn").style.display = "none";
-                //document.getElementById("restartBtn").style.display = "inline-block";
-            };
-
-            // if you then press the space button on your keyboard you restart the game
-            // this means that the snake is set to a certain point, the direction is set new, the score is 0 again and the food needs to be generated.
-            const resetGame = (autoStart = false) => {
-                isGameOver = false;
-                clearInterval(gameInterval);
-
-                // Hide the overlay banner
-                document.getElementById("gameOverModal").style.display = "none";
-                
-                // the current difficulty needs to be applied
-                setDifficulty(currentDifficulty);
-                updateGameSubheader(currentDifficulty);
-
-                snake = [
-                    { x: 10, y: 10 },
-                    { x: 9, y: 10 },
-                    { x: 8, y: 10 }
-                ];
-                direction = { x: 1, y: 0 };
-                score = 0;
-
-                // the speed needs to be resettet too
-                currentSpeed = initialSpeed;
-                spawnFood();
-
-                // pick a new random color for every new run
-                snakeColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
-               
-                // the score needs to be resetted too 
-                document.getElementById("currentScore").innerText = score;
-                // the pause/start button needs to be visible again
-                //document.getElementById("startBtn").style.display = "inline-block";
-                // the reset button needs to be hidden again when the game starts
-                //document.getElementById("restartBtn").style.display = "none";
-
-                if (autoStart){
-                    isPaused = false;
-                    document.getElementById("info").innerText = "";
-                    document.getElementById("startBtn").innerText = "Pause (Space)";
-                    // the game loop is started again
-                    startGame();
-                }
-                else{
-                    isPaused = true;
-                    document.getElementById("info").innerText = "Press Start to Play!";
-                    document.getElementById("startBtn").innerText = "Start";
-                    drawGame();
-                }
-            };
-
-
-            // Step 1: Movement (game loop)
-            const moveSnake = () => {
-                // the head is the first element in the array so snake[0]
-                // then calculate the new head position and create a new object
-                // if the head was at x: 5 and is moving right (so the direction.x = 1), the head will be at x: 6
-                const head = {
-                    x: snake[0].x + direction.x,
-                    y: snake[0].y + direction.y
-                };
-                
-                // for step 4 there needs to be a check for a wall collision
-                // it checks if it is out of the grid so smaller then 0 or bigger then the titleCount
-                const hitWall = head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount;
-                
-                // it is also possible that the snake hits itselfe - thats when the snakes head touches the end of it
-                const hitSelf = snake.some(segment => segment.x === head.x && segment.y === head.y);
-
-                // if either of those boolean variables are true then the game is over and the handleGameOver() function needs to be called
-                if (hitWall || hitSelf){
-                    handleGameOver();
-                    return;
-                }
-
-                // with .unshift(head) the new head is added to the front
-                snake.unshift(head);
-                // THIS IS WORKING FOR STEP 1 AND 2:
-                // with .pop() the last tail segment is removed
-                //snake.pop();
-                // this way the snake keeps the same length
-
-                // FOR STEP 3 moveSnake MUST BE UPDATED BECAUSE THE SNAKE SHOULD GROW:
-                // the function needs to check if the new head position matches the food position 
-                if (head.x === food.x && head.y === food.y){
-                    // if so then the snake ate the food so the score needs to go up by 1
-                    score += 1;
-
-                    // first the current score needs to be updated and displayed on the page
-                    document.getElementById("currentScore").innerText = score;
-
-                    // the score needs to be checked
-                    // so if the current score is bigger then the highscore then the highscore i sthe current score
-                    if (score > highScore) {
-                        highScore = score;
-                        localStorage.setItem("snakeHighScore", highScore);
-                        document.getElementById("highScore").innerText = highScore;
-                    }
-
-                    // the speed decrease should be based on selection of the difficulty level
-                    let speedDecrease = 5;
-                    if (currentDifficulty === "easy") speedDecrease = 5;
-                    else if (currentDifficulty === "medium") speedDecrease = 10;
-                    else if (currentDifficulty === "hard") speedDecrease = 20;
-                    else if (currentDifficulty === "ultra") speedDecrease = 10;
-
-                    // the current speed needs to be calculated
-                    // every point the intervall is reduced by 5ms till the minimum of 50ms is reached
-                    currentSpeed = Math.max(30, initialSpeed - (score * speedDecrease));
-
-                    clearInterval(gameInterval);
-                    gameInterval = setInterval(gameLoop, currentSpeed);
-                    
-
-                    // and a new food position must be generated
-                    // the snake.pop() is not called here and thats why the snake grows 
-                    spawnFood();
-                }
-                // if the snake did not eat any foot the tail must be removed so it stays the same length
-                else {
-                    snake.pop();
-                }
-
-            }
-
-            // that the snake really moves foreward on the screen the functions need to be called every 150 ms
-            // it is important to call the drawGame because the array would change internally but the webpage would continue displaying the old frame
-            const gameLoop = () => {
-                if (isGameOver || isPaused){
-                    return;
-                }
-                moveSnake();
-                drawGame();
-            };
-            
-            // for step 4 make a variable
-            // so the function gameLoop (which contains the moveSnake and drawGame function) is called every 150 ms
-            // startGame();
-            
-            // Attach click event & remove keyboard focus
-            document.getElementById("startBtn").addEventListener("click", (event) => {
-                togglePause();
-                // this prevents the double-triggering because it unfocuses the button
-                //event.target.blur();
-            });
-
-            document.getElementById("restartBtn").addEventListener("click", () => {
-                resetGame(true);
-            });
-
-
-            // Step 2: Keyboard controls (arrow keys)
-            // the program needs to keep track of the keyboard and which key is pressed. This works the best with an EventListener
-            // he should listen to the entire webpage (thats the document for)and it is triggered when a key is pressed down (keydown - the other option would be keyup)
-            // the event is an object that is automatically created by the browser. He holds the metadata about the key press such as event.key
-            // an eventlistener for the spacebar. if its pressed the pause button is aktivated
-            document.addEventListener("keydown", (event) => {
-                const gameScreen = document.getElementById("gameScreen");
-                if (!gameScreen.classList.contains("active")) return;
-                
-                // it checks if the key pressed was the spacebar
-                if (event.key === " " || event.code === "Space"){
-                    // if so then the default action of the webbrowser is stopped
-                    event.preventDefault();
-                    // the fucntion for handling the pasuing and unpausing is called
-                    togglePause();
-                    return
-                }
-                
-                
-                // the game should ignore every imput when the game is over
-                if (isGameOver) return;
-                
-                // this checks if the key pressed was the Up Arrow and that the snake is not currently moving down
-                // if boths true then the direction is updated
-                if (event.key === "ArrowUp" && direction.y !== 1){
-                    direction = {x: 0, y: -1};
-                }
-                // this checks if the key pressed was Down Arrow and the snake is not currently moving up
-                // if boths true then the direction is updated
-                else if (event.key === "ArrowDown" && direction.y !== -1){
-                    direction = {x: 0, y: 1};
-                } 
-                // this checks if the key pressed was the Lef Arrow and the snake is not moving right
-                // if boths true then the drection is updated
-                else if (event.key === "ArrowLeft" && direction.x !== 1){
-                    direction = {x: -1, y: 0};
-                }
-                // checks if the key pressed down was Right Arrow and the snake is not moving left
-                // if boths true the direction is updated
-                else if (event.key === "ArrowRight" && direction.x !== -1){
-                    direction = {x: 1, y: 0};
-                }
-            })
-
-            // to force the canvas redraw the modal save needs to be updated with the listener
-            saveModeBtn.addEventListener("click", () =>{
-                const selectedRadio = document.querySelector('input[name="modalDifficulty"]:checked');
-                if (selectedRadio) {
-                    const selectedValue = selectedRadio.value;
-                    difficultySelect.value = selectedValue;
-                    
-                    setDifficulty(selectedValue);
-                    document.getElementById("difficultyInfo").innerText = difficultyDescriptions[selectedValue];
-                    updateGameSubheader(selectedValue);
-                    
-                    // Redraw canvas to update grid visibility immediately
-                    drawGame();
-                }
-                modeModal.style.display = "none";
-            })
-            
-
-            // Display start prompt on screen load
-            document.getElementById("info").innerText = "Press Spacebar or click Start to begin!";
-            drawGame(); // Render initial snake and food setup
-
-            // Step 4: Game over
-            // Step 5: Improvements
-            
-            // DIFFICULT FUNCTIONS
-        
-            function setDifficulty(level){
-                // a function to select the level
-                currentDifficulty = level;
-                if (level === "easy") initialSpeed = 160;
-                else if (level === "medium") initialSpeed = 140;
-                else if (level === "hard") initialSpeed = 110;
-                else if (level === "ultra") initialSpeed = 130;
-                
-                currentSpeed = initialSpeed;
-
-                // clear any active timer for the food when switching the mode
-                if (foodTimer) clearTimeout(foodTimer);
-
-                if (!isPaused && !isGameOver){
-                    clearInterval(gameInterval);
-                    startGame();
-                }
-            }
-
-            function drawGrid() {
-                // a function that draws the grid if the mode is easy
-                if (currentDifficulty !== "easy") return;
-
-                // first the color and 1 pixel linewidth is defined
-                ctx.strokeStyle = "#ccc";
-                ctx.lineWidth = 1;
-                ctx.beginPath(); // Start one single path
-
-                for (let i = 0; i <= tileCount; i++) {
-                    const position = i * gridSize;
-
-                    // Vertical line
-                    // ctx.moveTo() moves the "pencil" to a position but without drawing a line
-                    ctx.moveTo(position, 0);
-                    // then with lineTo the line from the current Position to the specified posititon is being drawed
-                    ctx.lineTo(position, canvas.height);
-
-                    // Horizontal line
-                    ctx.moveTo(0, position);
-                    ctx.lineTo(canvas.width, position);
-                }
-
-                ctx.stroke(); // Draw all lines in one single call
-            }
-
-            function spawnFood() {
-                food = generateFood();
-                
-                if (foodTimer) clearTimeout(foodTimer);
-
-                if (currentDifficulty === "ultra") {
-                    foodTimer = setTimeout(() => {
-                        food.visible = false;
-                        // refresh frame to remove visual food instantly
-                        drawGame();
-                    }, 2000);
-                }
-            }
-
-        </script>
-    </div>
+    <!--i moved all the javaScript logic to it's own document.
+    because it is more structured and the html document won't get too long-->
+    <script src="game.js"></script>
 </body>
 </html>

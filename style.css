@@ -28,7 +28,7 @@ body{
 
 /* active screen classes that make the container visible */
 .screen.active{
-    display: flex;
+    display: block;
 }
 
 /* to style the home screen */
