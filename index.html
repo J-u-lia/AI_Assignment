@@ -257,12 +257,17 @@
             // Step 3: Eating and growing
             // first create a function that generates the food at random coordinates inside the grid
             const generateFood = () => {
-                return {
-                    x: Math.floor(Math.random() * tileCount),
-                    y: Math.floor(Math.random() * tileCount),
-                    // for the ultra hard mode
-                    visible: true
-                };
+                // creating two empty containers
+                // outside of the do while block so they are being reused every time the loop tries a new random position
+                let x, y;
+                // pick a random x and y spot on the board as long as they match any segment of the snake
+                // if they don't match the snake make that x and y position to the new position of the food  
+                do {
+                    x = Math.floor(Math.random() * tileCount);
+                    y = Math.floor(Math.random() * tileCount);
+                } while (snake.some(segment => segment.x === x && segment.y === y));
+
+                return { x, y, visible: true };
             };
             
             // this makes an array of coordinate objects. They represent the segments
