@@ -27,6 +27,13 @@ const modeSelect = document.getElementById("modeSelect");   // game mode selecti
 
 // all Game configurations and states
 
+// Game variables & canvas contexts
+//let canvas, ctx;
+
+// UI elements (queried after DOM is ready)
+//let scoreDisplay, highScoreDisplay, levelGameHeader, targetScoreDisplay;
+//let startBtn, diffStartBtn;
+
 const GRID_SIZE = 20;   //sets the size of each grid square to 20 pixels
 let tileCount = canvas.width / GRID_SIZE;   // calculates how many grid squares fit across the canvas
 
@@ -42,7 +49,7 @@ let snakeColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
 
 let score = 0;  // stores the current score and it is at the beginning 0
 let highScore = localStorage.getItem("snakeHighScore") || 0;    // gets the saved high score from the browsers storage and if its not safed then its 0
-highScoreDisplay.textContent = highScore;   // the highscore gets displayed
+if (highScoreDisplay) highScoreDisplay.textContent = highScore;   // the highscore gets displayed
 
 let gameInterval = null;    // interval to repeatedly run the game loop
 let foodTimer = null;   // timer used to making the food disappear in ultra hard mode
@@ -54,6 +61,73 @@ let isChangingDirection = false; // player cant change direction multiple times 
 let currentDifficulty = "normal";   // stores current game difficulty "normal" or "ultra"
 let gameSpeed = 100;    // Delay in ms between game updates - the smaller the number the faster the snake
 let soundEnabled = true;    // controlles the game sounds to on or off
+
+
+
+
+
+// SCREEN SWITCHING LOGIC
+
+// funtion to switch between diffrent screens in the game
+function showScreen(screenId) {
+    // finds every html element that has the class screen
+    const screens = document.querySelectorAll(".screen");
+    // goes through every screen one at a time and removes the active class from each screen so all screens are hidden before showing the selected one
+    screens.forEach((screen) => screen.classList.remove("active"));
+
+    // gets the target screen you want
+    let targetScreen;
+    if (screenId === "home") {  // if the id is hoem then get the screen homeScreen
+        targetScreen = document.getElementById("homeScreen");
+    } else if (screenId === "levelSelect") {
+        targetScreen = document.getElementById("levelSelectScreen");
+    } else if (screenId === "difficultySelect") {
+        targetScreen = document.getElementById("difficultySelectScreen");
+    } else if (screenId === "game") {
+        targetScreen = document.getElementById("gameScreen");
+    }
+    // checks if a matching screen was found so a little error preventer if an invalid screen ID is given
+    if (targetScreen) {
+        targetScreen.classList.add("active");   // adds then the active class to the selected screen to make it visible
+    }
+}
+
+// HOME BUTTON EVENT LISTENERS
+
+// finds the button that takes the player to the Level Mode screen
+const goToLevelModeBtn = document.getElementById("goToLevelModeBtn");
+// finds the button that takes the player to the difficulty mode scree 
+const goToDifficultyModeBtn = document.getElementById("goToDifficultyModeBtn");
+
+if (goToLevelModeBtn) { // checks if the level mode button actually exists in html
+    // and then adds a click listener to the level mode button - runs whenever the player presses that button
+    // the levelSelect screen is showed
+    goToLevelModeBtn.addEventListener("click", () => showScreen("levelSelect"));
+}
+
+if (goToDifficultyModeBtn) {    // checks if the difficulty mode button exists in html
+    // and then adds a click event listener to the difficulty mode button - runs everytime when the player clicks the button
+    // the difficultySelect screen is showed
+    goToDifficultyModeBtn.addEventListener("click", () => showScreen("difficultySelect"));
+}
+
+// LEVEL SELECTION BUTTONS
+
+// finds all the html elements with the class btn-level
+const levelButtons = document.querySelectorAll(".btn-level");
+// goes then through every level button at once
+levelButtons.forEach((btn) => {
+    // adds an click eventlistener to the current level button
+    btn.addEventListener("click", (e) => {
+        // first the value of the data-level attribut from the clicked button is loaded
+        const levelNum = e.target.getAttribute("data-level");
+        // finds the element that displays the current level in the game header and changes its text to show the selected level
+        document.getElementById("levelGameHeader").textContent = `Level ${levelNum}`;
+        // it is switched from the level selection screen to the actual game screen
+        showScreen("game");
+    });
+});
+
 
 
 // Audio controll section
@@ -190,6 +264,30 @@ const moveSnake = () => {
 };
 
 // DRAW THE GAME BOARD AND THE SNAKE
+
+function drawGrid() {
+    // first the color and 1 pixel linewidth is defined
+    ctx.strokeStyle = "#ccc";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); // Start one single path
+
+    for (let i = 0; i <= tileCount; i++) {
+        const position = i * GRID_SIZE;
+
+        // Vertical line
+        // ctx.moveTo() moves the "pencil" to a position but without drawing a line
+        ctx.moveTo(position, 0);
+        // then with lineTo the line from the current Position to the specified posititon is being drawed
+        ctx.lineTo(position, canvas.height);
+
+        // Horizontal line
+        ctx.moveTo(0, position);
+        ctx.lineTo(canvas.width, position);
+    }
+
+    ctx.stroke(); // Draw all lines in one single call
+}
+
 
 // a function that draws the game on the canvas
 // called after the game state changes so the screen stays updated
@@ -365,9 +463,9 @@ document.addEventListener("keydown", (event) => {
     }
 })
 
-startBtn.addEventListener("click", startGame);  // when the start button is clicked start the game
-pauseBtn.addEventListener("click", togglePause);    // if the pasue button is clicked pause the game
-restartBtn.addEventListener("click", restartGame);  // when the restart button is clicket start the game again from the beginning
+if (startBtn) startBtn.addEventListener("click", startGame);  // when the start button is clicked start the game
+if (pauseBtn) pauseBtn.addEventListener("click", togglePause);    // if the pasue button is clicked pause the game
+if (restartBtn) restartBtn.addEventListener("click", restartGame);  // when the restart button is clicket start the game again from the beginning
 
 // SAVE SETTINGS CONFIGURATION
 
