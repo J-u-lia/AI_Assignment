@@ -1,610 +1,368 @@
-// first define all DOM Elements and the game Canvas
-
+// GAME SETUP
 // gets the html canvas elemtn where the snake game is drawn
-//const canvas = document.getElementById("gameCanvas");
+const canvas = document.getElementById("gameCanvas");
 // gets the 2D drawing context from the canvas so it is possible to draw shapes and colors
-//const ctx = canvas.getContext("2d");
+const ctx = canvas.getContext("2d");
+const gridSize = 20;
+const tileCount = canvas.width / gridSize;
 
-// gets the different buttons from the html
-const startBtn = document.getElementById("startBtn");   // start button
-const pauseBtn = document.getElementById("pauseBtn");   // pause button
-const restartBtn = document.getElementById("restartBtn");   // restart button
-const saveModeBtn = document.getElementById("saveModeBtn"); //button for saving the game settings
-
-// gets the different html elements
-//const scoreDisplay = document.getElementById("scoreDisplay");   // displayes the current score
-//const highScoreDisplay = document.getElementById("highScoreDisplay");   // displays the highest score
-//const pauseOverlay = document.getElementById("pauseOverlay");   // pause overlay that appears when the game is paused
-//const gameOverOverlay = document.getElementById("gameOverOverlay"); // game-overlay that appears when the player loses
-//const finalScoreDisplay = document.getElementById("finalScoreDisplay"); //final score is displayed after losing
-
-// gets different settings from the html
-const soundToggle = document.getElementById("soundToggle"); // checkbox that controls the game sounds
-const speedRange = document.getElementById("speedRange");   // speed slider
-const themeSelect = document.getElementById("themeSelect"); // theme selection element
-const modeSelect = document.getElementById("modeSelect");   // game mode selection element
-
-
-// all Game configurations and states
-
-// Game variables & canvas contexts
-let canvas, ctx;
-let activeCanvasId = null;
-
-// UI elements (queried after DOM is ready)
-let scoreDisplay, highScoreDisplay, levelGameHeader;
-//let startBtn, diffStartBtn;
-let pauseOverlay, gameOverOverlay, finalScoreDisplay;
-
-const GRID_SIZE = 20;   //sets the size of each grid square to 20 pixels
-let tileCount = canvas.width / GRID_SIZE;   // calculates how many grid squares fit across the canvas
-
-let snake = []; // makes an empty array that will later contain the parts of the snake
-let direction = { x: 1, y: 0 }; // sets the starting direction of the snake to right
-let food = { x: 0, y: 0, visible: true };   //creates the food objects with a starting position and it is initially visible
-
-// array of the different colors for the snake
+// ===== COLOR PALETTE =====
+// Array of the different colors for the snake
 const colorPalette = ["#2ecc71", "#3498db", "#e74c3c", "#9b59b6", "#f39c12", "#1abc9c"];
-// the color should be randomly selected out of the array
+// The color should be randomly selected out of the array
 let snakeColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
 
+// ===== DIFFICULTY CONFIGURATION =====
+const DIFFICULTY_CONFIG = {
+  easy: { baseSpeed: 160, speedMultiplier: 5, showGrid: true },
+  medium: { baseSpeed: 140, speedMultiplier: 10, showGrid: false },
+  hard: { baseSpeed: 120, speedMultiplier: 20, showGrid: false },
+  ultra: { baseSpeed: 90, speedMultiplier: 15, showGrid: false, ultraMode: true }
+};
 
-let score = 0;  // stores the current score and it is at the beginning 0
-let highScore = localStorage.getItem("snakeHighScore") || 0;    // gets the saved high score from the browsers storage and if its not safed then its 0
-//if (highScoreDisplay) highScoreDisplay.textContent = highScore;   // the highscore gets displayed
+// ===== DOM REFERENCES =====
+const homeScreen = document.getElementById("homeScreen");
+const levelSelectScreen = document.getElementById("levelSelectScreen");
+const difficultySelectScreen = document.getElementById("difficultySelectScreen");
+const gameScreen = document.getElementById("gameScreen");
+
+const goToLevelModeBtn = document.getElementById("goToLevelModeBtn");
+const goToDifficultyModeBtn = document.getElementById("goToDifficultyModeBtn");
+const backToHomeFromLevel = document.getElementById("backToHomeFromLevel");
+const backToHomeFromDiff = document.getElementById("backToHomeFromDiff");
+const startDiffGameBtn = document.getElementById("startDiffGameBtn");
+
+const levelGameHeader = document.getElementById("levelGameHeader");
+const currentScoreDisplay = document.getElementById("currentScore");
+const highScoreDisplay = document.getElementById("highScoreDisplay");
+const finalScoreDisplay = document.getElementById("finalScoreDisplay");
+
+const pauseOverlay = document.getElementById("pauseOverlay");
+const gameOverOverlay = document.getElementById("gameOverOverlay");
+
+const startBtn = document.getElementById("startBtn");
+const backBtn = document.getElementById("backBtn");
+const backToModeBtn = document.getElementById("backToModeBtn");
+const restartBtn = document.getElementById("restartBtn");
+const saveModeBtn = document.getElementById("saveModeBtn");
+
+// ===== INITIAL STATE & GAME VARIABLES =====
+let snake = [
+  { x: 10, y: 10 },
+  { x: 9, y: 10 },
+  { x: 8, y: 10 }
+];
+let direction = { x: 1, y: 0 };
+let food = { x: 15, y: 15 };
+let score = 0;
+
+let highScore = localStorage.getItem("snakeHighScore") || 0;
+let activeMode = "difficulty";
 let currentLevel = 1;
 let targetScore = 10;
 
-let gameInterval = null;    // interval to repeatedly run the game loop
-let foodTimer = null;   // timer used to making the food disappear in ultra hard mode
+let baseSpeed = 150;
+let currentSpeed = 150;
+let speedIncrementFactor = 0;
+let showGrid = true;
+let isUltraMode = false;
 
-let isPaused = false;   // variable for is game paused or not
-let isGameOver = false; // variable for is game over or not
-let isChangingDirection = false; // player cant change direction multiple times during one game tick so there are no self collision 180-turns
+let foodVisible = true;
+let foodTimeout = null;
 
-let currentDifficulty = "easy";   // stores current game difficulty "normal" or "ultra"
-let gameSpeed = 150;    // Delay in ms between game updates - the smaller the number the faster the snake
-let soundEnabled = true;    // controlles the game sounds to on or off
+let gameInterval = null;
+let isPaused = true;
+let isGameOver = false;
+let isChangingDirection = false;
 
-// SCREEN SWITCHING LOGIC
-
-// funtion to switch between diffrent screens in the game
-function showScreen(screenId) {
-    // finds every html element that has the class screen
-    const screens = document.querySelectorAll(".screen");
-    // goes through every screen one at a time and removes the active class from each screen so all screens are hidden before showing the selected one
-    screens.forEach((screen) => screen.classList.remove("active"));
-
-    // gets the target screen you want
-    let targetScreen;
-    if (screenId === "home") {  // if the id is hoem then get the screen homeScreen
-        targetScreen = document.getElementById("homeScreen");
-    } else if (screenId === "levelSelect") {
-        targetScreen = document.getElementById("levelSelectScreen");
-    } else if (screenId === "difficultySelect") {
-        targetScreen = document.getElementById("difficultySelectScreen");
-    } else if (screenId === "game") {
-        targetScreen = document.getElementById("gameScreen");
-    }
-    // checks if a matching screen was found so a little error preventer if an invalid screen ID is given
-    if (targetScreen) {
-        targetScreen.classList.add("active");   // adds then the active class to the selected screen to make it visible
-    }
-
-    // Stop current game loop when leaving active game screens
-    if (screenId !== "game" && screenId !== "difficultySelect") {
-        stopGame();
-    }
-}
-
-// HOME BUTTON EVENT LISTENERS
-
-// finds the button that takes the player to the Level Mode screen
-//const goToLevelModeBtn = document.getElementById("goToLevelModeBtn");
-// finds the button that takes the player to the difficulty mode scree 
-//const goToDifficultyModeBtn = document.getElementById("goToDifficultyModeBtn");
-
-//if (goToLevelModeBtn) { // checks if the level mode button actually exists in html
-    // and then adds a click listener to the level mode button - runs whenever the player presses that button
-    // the levelSelect screen is showed
-//    goToLevelModeBtn.addEventListener("click", () => showScreen("levelSelect"));
-//}
-
-//if (goToDifficultyModeBtn) {    // checks if the difficulty mode button exists in html
-    // and then adds a click event listener to the difficulty mode button - runs everytime when the player clicks the button
-    // the difficultySelect screen is showed
-//    goToDifficultyModeBtn.addEventListener("click", () => showScreen("difficultySelect"));
-//}
-
-// LEVEL SELECTION BUTTONS
-
-// finds all the html elements with the class btn-level
-//const levelButtons = document.querySelectorAll(".btn-level");
-// goes then through every level button at once
-//levelButtons.forEach((btn) => {
-    // adds an click eventlistener to the current level button
-//    btn.addEventListener("click", (e) => {
-        // first the value of the data-level attribut from the clicked button is loaded
-//        const levelNum = e.target.getAttribute("data-level");
-        // finds the element that displays the current level in the game header and changes its text to show the selected level
-//        document.getElementById("levelGameHeader").textContent = `Level ${levelNum}`;
-        // it is switched from the level selection screen to the actual game screen
-//        showScreen("game");
-//    });
-//});
-
-// --- DOM Initialization ---
+// ===== INITIALIZATION & EVENTS =====
 document.addEventListener("DOMContentLoaded", () => {
-    // Navigation Buttons
-    const goToLevelModeBtn = document.getElementById("goToLevelModeBtn");
-    const goToDifficultyModeBtn = document.getElementById("goToDifficultyModeBtn");
+  highScoreDisplay.textContent = highScore;
 
-    if (goToLevelModeBtn) goToLevelModeBtn.addEventListener("click", () => showScreen("levelSelect"));
-    if (goToDifficultyModeBtn) goToDifficultyModeBtn.addEventListener("click", () => showScreen("difficultySelect"));
+  // Screen Switching
+  goToLevelModeBtn.addEventListener("click", () => showScreen(levelSelectScreen));
+  goToDifficultyModeBtn.addEventListener("click", () => showScreen(difficultySelectScreen));
+  backToHomeFromLevel.addEventListener("click", () => showScreen(homeScreen));
+  backToHomeFromDiff.addEventListener("click", () => showScreen(homeScreen));
+  backBtn.addEventListener("click", () => showScreen(homeScreen));
 
-    // Start Buttons
-    const startBtn = document.getElementById("startBtn");
-    const diffStartBtn = document.getElementById("diffStartBtn");
-
-    if (startBtn) startBtn.addEventListener("click", () => startSelectedGame("gameCanvas", "currentScore"));
-    if (diffStartBtn) diffStartBtn.addEventListener("click", () => startSelectedGame("diffGameCanvas", "diffCurrentScore"));
-
-    // Overlays & Restart
-    pauseOverlay = document.getElementById("pauseOverlay");
-    gameOverOverlay = document.getElementById("gameOverOverlay");
-    finalScoreDisplay = document.getElementById("finalScoreDisplay");
-    
-    const restartBtn = document.getElementById("restartBtn");
-    if (restartBtn) {
-        restartBtn.addEventListener("click", () => {
-            hideOverlays();
-            startSelectedGame(activeCanvasId || "gameCanvas", activeCanvasId === "diffGameCanvas" ? "diffCurrentScore" : "currentScore");
-        });
+  // Mode Selection Navigation
+  backToModeBtn.addEventListener("click", () => {
+    if (activeMode === "level") {
+      showScreen(levelSelectScreen);
+    } else {
+      showScreen(difficultySelectScreen);
     }
+  });
 
-    // Save Progress Button Hook
-    const saveModeBtn = document.getElementById("saveModeBtn");
-    if (saveModeBtn) {
-        saveModeBtn.addEventListener("click", () => {
-            localStorage.setItem("savedSnakeLevel", currentLevel);
-            alert(`Progress saved! Current Level: ${currentLevel}`);
-        });
-    }
+  // Level Buttons Setup
+  document.querySelectorAll(".btn-level").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      currentLevel = parseInt(e.target.getAttribute("data-level"), 10);
+      activeMode = "level";
+      targetScore = currentLevel * 10;
 
-    // Difficulty Radio Selection
-    const diffRadios = document.querySelectorAll('input[name="gameDifficulty"]');
-    diffRadios.forEach((radio) => {
-        radio.addEventListener("change", (e) => {
-            currentDifficulty = e.target.value;
-            setSpeedByDifficulty(currentDifficulty);
-        });
+      baseSpeed = Math.max(140 - currentLevel * 8, 50);
+      speedIncrementFactor = 2;
+      showGrid = true;
+      isUltraMode = false;
+
+      saveModeBtn.style.display = "inline-block";
+      backToModeBtn.textContent = "← Select Level";
+
+      levelGameHeader.textContent = `Level ${currentLevel} (Target: ${targetScore} pts)`;
+      showScreen(gameScreen);
+      prepareGame();
     });
+  });
 
-    // Level Selection Buttons (1 through 10)
-    const levelButtons = document.querySelectorAll(".btn-level");
-    levelButtons.forEach((btn) => {
-        btn.addEventListener("click", (e) => {
-            currentLevel = parseInt(e.target.getAttribute("data-level"), 10);
-            levelGameHeader = document.getElementById("levelGameHeader");
-            if (levelGameHeader) levelGameHeader.textContent = `Welcome to Level ${currentLevel}`;
-            
-            targetScore = currentLevel * 10;
-            const targetScoreElem = document.getElementById("targetScore");
-            if (targetScoreElem) targetScoreElem.textContent = targetScore;
+  // Difficulty Start Button Setup
+  startDiffGameBtn.addEventListener("click", () => {
+    activeMode = "difficulty";
+    const selectedDifficulty = document.querySelector('input[name="gameDifficulty"]:checked').value;
 
-            showScreen("game");
-        });
-    });
+    const config = DIFFICULTY_CONFIG[selectedDifficulty];
+    baseSpeed = config.baseSpeed;
+    speedIncrementFactor = config.speedMultiplier;
+    showGrid = config.showGrid;
+    isUltraMode = config.ultraMode || false;
 
-    // Initialize High Score Displays
-    const diffHighScore = document.getElementById("diffHighScore");
-    if (diffHighScore) diffHighScore.textContent = highScore;
+    saveModeBtn.style.display = "none";
+    backToModeBtn.textContent = "← Select Difficulty";
+
+    levelGameHeader.textContent = `Difficulty: ${selectedDifficulty.toUpperCase()}`;
+    showScreen(gameScreen);
+    prepareGame();
+  });
+
+  // Action Buttons
+  startBtn.addEventListener("click", togglePause);
+  restartBtn.addEventListener("click", () => {
+    prepareGame();
+    togglePause();
+  });
+
+  saveModeBtn.addEventListener("click", () => {
+    localStorage.setItem("savedSnakeLevel", currentLevel);
+    alert(`Progress saved! Level ${currentLevel} recorded.`);
+  });
 });
 
-// --- Speed Settings ---
-function setSpeedByDifficulty(diff) {
-    switch (diff) {
-        case "easy": gameSpeed = 150; break;
-        case "medium": gameSpeed = 100; break;
-        case "hard": gameSpeed = 70; break;
-        case "ultra": gameSpeed = 40; break;
-    }
+// ===== SCREEN SWITCHER =====
+function showScreen(screenToShow) {
+  stopGame();
+  document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+  screenToShow.classList.add("active");
 }
 
+// ===== PREPARE & LOOP =====
+function prepareGame() {
+  stopGame();
 
-// Audio controll section
+  // Pick a random snake color every time a new game is prepared
+  snakeColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
 
-const playSound = (type) => {
-    // a function that creates and plays different sounds
-    // the sounds depend on the type given to it
-    if (!soundEnabled) return;  // if the sound is not enabled then don't run the rest of the code
-    
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();  // this creates a new Web Audio API audio context
-    const osc = audioCtx.createOscillator();    // creates a oscillator which generates the actual sound wave
-    const gain = audioCtx.createGain(); // creates a gain node. That controls the volume of the sound
-    
-    osc.connect(gain);  // connect the oscillator to the volume controllers
-    gain.connect(audioCtx.destination); // connects the volume controller to the computer's speaker
-    
-    // if the sound requested is eat then use the smooth sine wave
-    if (type === "eat") {
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(600, audioCtx.currentTime);    // start the sound at 600Hz
-        osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);    // increase it sloly to 800Hz
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);    //the volumn schould start at 0.1
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);   // lower the volume slowly to nearly 0
-        osc.start();    // start playing the sound
-        osc.stop(audioCtx.currentTime + 0.1);   // stop the sound after 0.1 second
+  snake = [
+    { x: 10, y: 10 },
+    { x: 9, y: 10 },
+    { x: 8, y: 10 }
+  ];
+  direction = { x: 1, y: 0 };
+  score = 0;
+  currentSpeed = baseSpeed;
+
+  isPaused = true;
+  isGameOver = false;
+  isChangingDirection = false;
+
+  currentScoreDisplay.textContent = score;
+  pauseOverlay.classList.remove("hidden");
+  gameOverOverlay.classList.add("hidden");
+
+  spawnFood();
+  drawGame();
+}
+
+function stopGame() {
+  if (gameInterval) clearInterval(gameInterval);
+  if (foodTimeout) clearTimeout(foodTimeout);
+  gameInterval = null;
+  foodTimeout = null;
+}
+
+function gameLoop() {
+  if (isGameOver || isPaused) return;
+  moveSnake();
+  drawGame();
+}
+
+function moveSnake() {
+  const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
+
+  // Collision checks
+  if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+    triggerGameOver();
+    return;
+  }
+
+  for (let segment of snake) {
+    if (head.x === segment.x && head.y === segment.y) {
+      triggerGameOver();
+      return;
     }
-    // if the requested sound is die then use the sawtooth sound
-    else if (type === "die") {
-        osc.type = "sawtooth";
-        osc.frequency.setValueAtTime(150, audioCtx.currentTime);    // start at 150Hz
-        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.3); // lower the frequency to 40 Hz slowly
-        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);    // the volume should start at 0.2
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);   // lower the volume slowly to nealry 0
-        osc.start();    // start the sound
-        osc.stop(audioCtx.currentTime + 0.3);   // stop after 0.3 seconds
+  }
+
+  snake.unshift(head);
+
+  // Food eating logic
+  if (head.x === food.x && head.y === food.y) {
+    score += 1;
+    currentScoreDisplay.textContent = score;
+
+    if (score > highScore) {
+      highScore = score;
+      highScoreDisplay.textContent = highScore;
+      localStorage.setItem("snakeHighScore", highScore);
     }
-};
 
-// Generate and Spawn the Food
+    if (activeMode === "level" && score >= targetScore) {
+      stopGame();
+      alert(`🎉 Level ${currentLevel} Completed!`);
+      showScreen(levelSelectScreen);
+      return;
+    }
 
-const generateFood = () => {
-    // creating two empty containers
-    // outside of the do while block so they are being reused every time the loop tries a new random position
-    let x, y;
-    let overlapping;    // for overlapping food and snake
-    // pick a random x and y spot on the board as long as they match any segment of the snake
-    // if they don't match the snake make that x and y position to the new position of the food  
-    do {
-        overlapping = false;
-        x = Math.floor(Math.random() * tileCount);
-        y = Math.floor(Math.random() * tileCount);
+    currentSpeed = Math.max(30, baseSpeed - score * speedIncrementFactor);
+    if (!isPaused && !isGameOver) {
+      if (gameInterval) clearInterval(gameInterval);
+      gameInterval = setInterval(gameLoop, currentSpeed);
+    }
 
-        for (let segment of snake){
-            if (segment.x === x && segment.y === y){
-                overlapping = true;
-                break;
-            }
-        }
+    spawnFood();
+  } else {
+    snake.pop();
+  }
 
-    } while (overlapping);
+  isChangingDirection = false;
+}
 
-    return { x, y, visible: true };
+// ===== DRAWING =====
+const drawGame = () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Optional background grid
+  if (showGrid) {
+    ctx.strokeStyle = "#1e293b";
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= tileCount; i++) {
+      const pos = i * gridSize;
+      ctx.beginPath();
+      ctx.moveTo(pos, 0);
+      ctx.lineTo(pos, canvas.height);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(0, pos);
+      ctx.lineTo(canvas.width, pos);
+      ctx.stroke();
+    }
+  }
+
+  // Draw Food (Red fill)
+  if (foodVisible) {
+    ctx.fillStyle = "red";
+    ctx.fillRect(
+      food.x * gridSize,
+      food.y * gridSize,
+      gridSize,
+      gridSize
+    );
+  }
+
+  // Draw Snake (Random color selection)
+  ctx.fillStyle = snakeColor;
+  for (const segment of snake) {
+    ctx.fillRect(
+      segment.x * gridSize,
+      segment.y * gridSize,
+      gridSize,
+      gridSize
+    );
+  }
 };
 
 function spawnFood() {
-    food = generateFood();  // generates a new food position
-    if (foodTimer) clearTimeout(foodTimer); // if an old food timer exists it should be canceled
+  if (foodTimeout) clearTimeout(foodTimeout);
 
-    // In Ultra hard mode, food disappears after 2 seconds
-    if (currentDifficulty === "ultra") {
-        foodTimer = setTimeout(() => {
-            food.visible = false;
-            // refresh frame to remove visual food instantly
-            drawGame();
-        }, 2000);
-    }
-}
+  let x, y, overlapping;
+  do {
+    overlapping = false;
+    x = Math.floor(Math.random() * tileCount);
+    y = Math.floor(Math.random() * tileCount);
 
-// LET THE SNAKE MOVE
-
-// a function that moves the snake forward by one grid square
-// it is called once every game tick by the game loop
-const moveSnake = () => {
-    // calculates where the new snake head should be 
-    const head = {
-        x: snake[0].x + direction.x,
-        y: snake[0].y + direction.y };
-
-    // checks if the snake has hit a wall (left, right, top, bottom)
-    if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
-        triggerGameOver(); // if so then the game is over
-        return;
-    }
-
-    // checks if the snake has run into itslefe 
     for (let segment of snake) {
-        // if at the new head position is already a snake
-        if (head.x === segment.x && head.y === segment.y) {
-            triggerGameOver(); // the game is over
-            return;
-        }
+      if (segment.x === x && segment.y === y) {
+        overlapping = true;
+        break;
+      }
     }
-    // adds the head to the beginning of the snake array
-    snake.unshift(head);
+  } while (overlapping);
 
-    // checks if the snake has eaten food so if the head is at a position where the food is
-    if (food.visible && head.x === food.x && head.y === food.y) {
-        // the score updates by 1 point and is shown on the page
-        score += 1;
-        if (scoreDisplay) scoreDisplay.textContent = score;
+  food = { x, y };
+  foodVisible = true;
 
-        // if the new score is bigger the the highscore the new score gets to be the highscore
-        if (score > highScore) {
-            highScore = score;
-            const diffHighScore = document.getElementById("diffHighScore");
-            if (diffHighScore) diffHighScore.textContent = highScore;
-            localStorage.setItem("snakeHighScore", highScore);
-        }
-        
-        // becasue the food has been eaten the eat sound has to be played
-        playSound("eat");
-        // and a new food is spawned somewhere
-        spawnFood();
-    } else {
-        // if food is not eaten the last part of the snake is removed
-        snake.pop();
-    }
-
-    // you can change the direction again before the  next game tick
-    isChangingDirection = false;
-};
-
-// DRAW THE GAME BOARD AND THE SNAKE
-
-function drawGrid() {
-    if (!ctx) return;
-    // first the color and 1 pixel linewidth is defined
-    ctx.strokeStyle = "#ccc";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); // Start one single path
-
-    for (let i = 0; i <= tileCount; i++) {
-        const position = i * GRID_SIZE;
-
-        // Vertical line
-        // ctx.moveTo() moves the "pencil" to a position but without drawing a line
-        ctx.moveTo(position, 0);
-        // then with lineTo the line from the current Position to the specified posititon is being drawed
-        ctx.lineTo(position, canvas.height);
-
-        // Horizontal line
-        ctx.moveTo(0, position);
-        ctx.lineTo(canvas.width, position);
-    }
-
-    ctx.stroke(); // Draw all lines in one single call
+  if (isUltraMode) {
+    foodTimeout = setTimeout(() => {
+      foodVisible = false;
+      drawGame();
+    }, 2000);
+  }
 }
 
+function triggerGameOver() {
+  isGameOver = true;
+  stopGame();
+  finalScoreDisplay.textContent = score;
+  gameOverOverlay.classList.remove("hidden");
+}
 
-// a function that draws the game on the canvas
-// called after the game state changes so the screen stays updated
-const drawGame = () => {
-    if (!ctx || !canvas) return;
-    // first you want to erase the entire board before drawing a new frame
-    ctx.clearRect(0, 0,
-        canvas.width, canvas.height);
-    
-    // for the easy mode the grid lines
-    if (currentDifficulty === "easy"){
-        drawGrid();
-    }
+function togglePause() {
+  if (isGameOver) return;
 
-    // the food should only be drawn if visible
-    if (food.visible){
-        ctx.fillStyle = "red";
-        // this multiplies the grid coordinates by the gridSize to render squares for food and snake segments
-        // so for example tile 10 becomes pixel 200
-        ctx.fillRect(
-            food.x * GRID_SIZE,
-            food.y * GRID_SIZE,
-            GRID_SIZE, GRID_SIZE
-        );
-    }
-    
-    // draw the snake
-    ctx.fillStyle = snakeColor;
-    for (const segment of snake) {
-        ctx.fillRect(
-            segment.x * GRID_SIZE,
-            segment.y * GRID_SIZE,
-            GRID_SIZE, GRID_SIZE
-        );
-    }
-};
+  isPaused = !isPaused;
 
-// that the snake really moves foreward on the screen the functions need to be called every 150 ms
-// it is important to call the drawGame because the array would change internally but the webpage would continue displaying the old frame
-const gameLoop = () => {
-    if (isGameOver || isPaused){
-        return;
-    }
-    moveSnake();
-    drawGame();
-};
-
-// OVERLAYS
-
-const hideOverlays = () => {
-    if (pauseOverlay) pauseOverlay.classList.add("hidden");
-    if (gameOverOverlay) gameOverOverlay.classList.add("hidden");
-};
-
-// GAME FLOW CONTROL
-
-const stopGame = () => {
-    if (gameInterval) clearInterval(gameInterval);
-    if (foodTimer) clearTimeout(foodTimer);
-    hideOverlays();
-};
-
-// Resets game variables
-// used when starting a new game or restarting it
-const resetGameState = () => {
-    // this makes an array of coordinate objects. They represent the segments
-    // Segment 0 so x:10, y:10 is the head
-    snake = [
-        { x: 10, y: 10 },
-        { x: 9, y: 10 },
-        { x: 8, y: 10 }
-    ];
-    direction = { x: 1, y: 0 }; // snake initially always moves right
-    score = 0;  // the score is resetted
-    if (scoreDisplay) scoreDisplay.textContent = score; // and also displayed
-    isPaused = false;   // the game is not paused
-    isGameOver = false; // and notover
-    isChangingDirection = false;    // the player can immediately turn if he wants
-
-    // gameOverOverlay.classList.remove("active"); // hides the game-over screen when starting a new game because the active class is removed
-    // pauseOverlay.classList.remove("active");    // this hides the pause scree because the active class is removed
-
-    // if (gameInterval) clearInterval(gameInterval);  // checks if the game is already running and stops the existing game loop so there are not multiple game loops running at the same time
-    // if (foodTimer) clearTimeout(foodTimer); // checks if a food timer is running and if so he stops it - important for ultra hard mode
-
+  if (isPaused) {
     stopGame();
-    spawnFood();    // creates a new piece of food
-    drawGame(); // draws the game
-};
+    pauseOverlay.classList.remove("hidden");
+  } else {
+    pauseOverlay.classList.add("hidden");
+    gameInterval = setInterval(gameLoop, currentSpeed);
+  }
+}
 
-const startSelectedGame = (canvasId, scoreDisplayId) => {
-    activeCanvasId = canvasId;
-    canvas = document.getElementById(canvasId);
-    if (!canvas) return;
+// ===== KEYBOARD CONTROLS =====
+document.addEventListener("keydown", (e) => {
+  if (!gameScreen.classList.contains("active")) return;
 
-    ctx = canvas.getContext("2d");
-    tileCount = canvas.width / GRID_SIZE;
-    scoreDisplay = document.getElementById(scoreDisplayId);
+  if (e.key === " " || e.code === "Space") {
+    e.preventDefault();
+    togglePause();
+    return;
+  }
 
-    resetGameState();
-    gameInterval = setInterval(gameLoop, gameSpeed);
-};
+  if (isGameOver || isPaused || isChangingDirection) return;
 
-
-// Ifunctin for a completely new game
-// called when the start button is pressed
-//const startGame = () => {
-    // resetGameState();   // resetts all the game variables to their starting values
-//    if (gameInterval) clearInterval(gameInterval);
-//    gameInterval = setInterval(gameLoop, gameSpeed);    // the game loop is started and runs now repeatedly
-//};
-
-// function that restarts the game and begins a new round
-// called when the restart button is pressed or after game over
-//const restartGame = () => {
-//    resetGameState();   // resets the snake, score, direction, overlays and food
-//    startGame();
-    // gameInterval = setInterval(gameLoop, gameSpeed);    // starts game loop again using the current game speed
-//};
-
-// function to pause the current game but keeps the current game state
-//const pauseGame = () => {
-//    if (isGameOver || isPaused) return; // if the game is already over or already paused than nothing should happen
-//    isPaused = true;    // the game is now paused
-//    clearInterval(gameInterval);    // the game loop stops because the snake shpuld stop moving
-//    pauseOverlay.classList.add("active");   // adds the active class to show the pause overlay
-//};
-
-// function to resume the game after a pause
-// continues the game without resetting the snake or score
-//const resumeGame = () => {
-//    if (isGameOver || !isPaused) return;    // if the game is over or not in pause then there is nothing to do
-//    isPaused = false;   // the game should not be in oause
-//    pauseOverlay.classList.remove("active");    // removes the active class so the pause screen is not displayed
-//    startGame();
-    // gameInterval = setInterval(gameLoop, gameSpeed);    // the current speed is used
-//};
-
-// functiob for the end of the game
-// called when snake hits the wall or itselfe
-const triggerGameOver = () => {
-    isGameOver = true;  // the game is now over
-    //clearInterval(gameInterval);    // the game loop needs to be stopped
-    //if (foodTimer) clearTimeout(foodTimer); // the food timer should also stop if he runs
-    stopGame();
-
-    playSound("die");   // the die sound is played
-    if (finalScoreDisplay) finalScoreDisplay.textContent = score;  // the final score on teh gameover screen is displayed
-    if (gameOverOverlay) gameOverOverlay.classList.add("active");    // active class is added to make game over overlay visible
-};
-
-// Function used to switch between the pasued and running states
-// called when the player presses the spacebar
-const togglePause = () => {
-    if (isGameOver) return;
-
-    isPaused = !isPaused;
-    if (isPaused) {
-        if (gameInterval) clearInterval(gameInterval);
-        if (pauseOverlay) pauseOverlay.classList.remove("hidden");
-    } else {
-        if (pauseOverlay) pauseOverlay.classList.add("hidden");
-        gameInterval = setInterval(gameLoop, gameSpeed);
-    }
-};
-
-
-
-// EVENT LISTENERS
-
-// the program needs to keep track of the keyboard and which key is pressed. This works the best with an EventListener
-// he should listen to the entire webpage (thats the document for)and it is triggered when a key is pressed down (keydown - the other option would be keyup)
-// the event is an object that is automatically created by the browser. He holds the metadata about the key press such as event.key
-// an eventlistener for the spacebar. if its pressed the pause button is aktivated
-document.addEventListener("keydown", (event) => {
-    //const gameScreen = document.getElementById("gameScreen");
-    //if (!gameScreen.classList.contains("active")) return;
-    const activeScreen = document.querySelector(".screen.active");
-    if (!activeScreen || (activeScreen.id !== "gameScreen" && activeScreen.id !== "difficultySelectScreen")) return;
-
-    // it checks if the key pressed was the spacebar
-    if (event.key === " " || event.code === "Space"){
-        // if so then the default action of the webbrowser is stopped
-        event.preventDefault();
-        // the fucntion for handling the pasuing and unpausing is called
-        togglePause();
-        return
-    }
-    
-    
-    // the game should ignore every imput when the game is over, paused or ischangingdirection
-    if (isGameOver || isPaused || isChangingDirection) return;
-    
-    // this checks if the key pressed was the Up Arrow and that the snake is not currently moving down
-    // if boths true then the direction is updated
-    if (event.key === "ArrowUp" && direction.y !== 1){
-        direction = {x: 0, y: -1};
-        isChangingDirection = true;
-    }
-    // this checks if the key pressed was Down Arrow and the snake is not currently moving up
-    // if boths true then the direction is updated
-    else if (event.key === "ArrowDown" && direction.y !== -1){
-        direction = {x: 0, y: 1};
-        isChangingDirection = true;
-    } 
-    // this checks if the key pressed was the Lef Arrow and the snake is not moving right
-    // if boths true then the drection is updated
-    else if (event.key === "ArrowLeft" && direction.x !== 1){
-        direction = {x: -1, y: 0};
-        isChangingDirection = true;
-    }
-    // checks if the key pressed down was Right Arrow and the snake is not moving left
-    // if boths true the direction is updated
-    else if (event.key === "ArrowRight" && direction.x !== -1){
-        direction = {x: 1, y: 0};
-        isChangingDirection = true;
-    }
-})
-
-//if (startBtn) startBtn.addEventListener("click", startGame);  // when the start button is clicked start the game
-//if (pauseBtn) pauseBtn.addEventListener("click", togglePause);    // if the pasue button is clicked pause the game
-//if (restartBtn) restartBtn.addEventListener("click", restartGame);  // when the restart button is clicket start the game again from the beginning
-
-// SAVE SETTINGS CONFIGURATION
-
-// this code is run when the save setting button is clicked
-//saveModeBtn.addEventListener("click", () => {
-//    soundEnabled = soundToggle.checked; // gets the current checked or unchecked state of the sound checkbox
-//    currentDifficulty = modeSelect.value;   // gets the current selected game mode from the dropdown
-    
-    // converts the speed slider into a number
-//    const speedVal = parseInt(speedRange.value, 10);
-//    gameSpeed = 220 - speedVal * 18;    // converts the slider value into a delay between 40ms and 202ms - the higher the slider value the faster the snake
-
-    // checks if a game is currently running and has not ended
-//    if (gameInterval && !isGameOver && !isPaused) {
-//        clearInterval(gameInterval);    // stops old game interval
-//        gameInterval = setInterval(gameLoop, gameSpeed);    // starts new interval using the newly selected speed
-//    }
-//});
+  if ((e.key === "ArrowUp" || e.key === "w" || e.key === "W") && direction.y !== 1) {
+    direction = { x: 0, y: -1 };
+    isChangingDirection = true;
+  } else if ((e.key === "ArrowDown" || e.key === "s" || e.key === "S") && direction.y !== -1) {
+    direction = { x: 0, y: 1 };
+    isChangingDirection = true;
+  } else if ((e.key === "ArrowLeft" || e.key === "a" || e.key === "A") && direction.x !== 1) {
+    direction = { x: -1, y: 0 };
+    isChangingDirection = true;
+  } else if ((e.key === "ArrowRight" || e.key === "d" || e.key === "D") && direction.x !== -1) {
+    direction = { x: 1, y: 0 };
+    isChangingDirection = true;
+  }
+});
