@@ -310,6 +310,9 @@ document.addEventListener("DOMContentLoaded", () => {
         // the save button is visible and change the text on the back button
       saveModeBtn.style.display = "inline-block";
       backToModeBtn.textContent = "← Select Level";
+      // to make it the right color
+      backToModeBtn.classList.remove("btn-difficulty-mode");
+      backToModeBtn.classList.add("btn-level-mode");
         // the game header should be changed according to the level currently in
       levelGameHeader.textContent = `Level ${currentLevel}: ${config.name} (Target: ${targetScore} pts)`;
       showScreen(gameScreen);   // the game screen should be on
@@ -332,6 +335,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     saveModeBtn.style.display = "none"; // the save button should be hidden becasue here there is no opportunity to safe where you are
     backToModeBtn.textContent = "← Select Difficulty";  // the back button text is chanegd
+    // to give the button the right color
+    backToModeBtn.classList.remove("btn-level-mode");
+    backToModeBtn.classList.add("btn-difficulty-mode");
+
     // the game header must been changed to show the selected difficulty
     levelGameHeader.textContent = `Difficulty: ${selectedDifficulty.toUpperCase()}`;
     // change the game screen and prepare for the game

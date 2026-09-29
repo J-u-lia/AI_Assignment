@@ -237,6 +237,28 @@ p, .subtitle {
   transform: translateY(-2px);
 }
 
+.btn-difficulty-mode {
+    background-color: #f97316;
+    color: #ffffff;
+    border: 1px solid #ea580c;
+}
+
+.btn-difficulty-mode:hover {
+    background-color: #ea580c;
+    transform: translateY(-2px);
+}
+
+.btn-difficulty-start {
+    background-color: #f97316;
+    color: #ffffff;
+    border: 1px solid #ea580c;
+}
+
+.btn-difficulty-start:hover {
+    background-color: #ea580c;
+    transform: translateY(-2px);
+}
+
 .btn-save {
   background-color: #3f7d47;
   color: #ffffff;
