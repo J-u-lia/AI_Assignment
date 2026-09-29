@@ -249,6 +249,21 @@ p, .subtitle {
   transform: translateY(-2px);
 }
 
+/* --- pause overlay --- */
+
+.pause-icon {
+  font-size: 4rem;
+  color: #ffffff;
+  margin-bottom: 15px;
+  line-height: 1;
+}
+
+.game-over-banner p {
+  color: #ffffff;
+  font-size: 1rem;
+  margin-bottom: 0;
+}
+
 /* --- LEVEL SELECTION GRID --- */
 .level-grid {
   display: flex;
