@@ -639,12 +639,21 @@ const drawGame = () => {
   // everything that was on the canvas before needs to be cleared so old positions dissappear
   // baisicly reste the canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw a subtle grass pattern on the game board
+  for (let y = 0; y < tileCount; y++) {
+      for (let x = 0; x < tileCount; x++) {
+          ctx.fillStyle = (x + y) % 2 === 0 ? "#5b9b45" : "#639f4c";
+          ctx.fillRect(x * gridSize, y * gridSize, gridSize, gridSize);
+      }
+  }
+
   // get the settings for the current level if the level mode is on if not it will be null
   const currentConfig = activeMode === "level" ? LEVEL_CONFIGS[currentLevel] : null;
 
   // if the showGrid is true dwar the grid - so difficulty Easy
   if (showGrid) {
-    ctx.strokeStyle = "#1e293b";  // color of grid lines
+    ctx.strokeStyle = "#1b331b";  // color of grid lines
     ctx.lineWidth = 1;  // how big the lines are (1 pixel)
     // go trough every row and column
     for (let i = 0; i <= tileCount; i++) {
