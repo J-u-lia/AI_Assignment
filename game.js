@@ -766,14 +766,69 @@ const drawGame = () => {
   // draw the snake with the array snakeColor so every game there is a new color
   ctx.fillStyle = snakeColor;
   // iterates over every element of the snake and makes it one square
-  for (const segment of snake) {
-    ctx.fillRect(
-      segment.x * gridSize,
-      segment.y * gridSize,
-      gridSize,
-      gridSize
-    );
-  }
+  // Draw each part of the snake
+
+  snake.forEach((segment, index) => {
+    // Get the position of this snake segment
+    const x = segment.x * gridSize;
+    const y = segment.y * gridSize;
+
+    ctx.beginPath();
+
+    // Round only the outside corners of the head
+    // its [top-left, top-right, bottom-right, bottom-left]
+    if (index === 0) {
+        // the bigger the number the rounder
+        if (direction.x === 1) {
+            // Snake is moving right, so round the right corners
+            ctx.roundRect(x, y, gridSize, gridSize, [0, 10, 10, 0]);
+
+        } else if (direction.x === -1) {
+            // Snake is moving left, so round the left corners
+            ctx.roundRect(x, y, gridSize, gridSize, [10, 0, 0, 10]);
+
+        } else if (direction.y === 1) {
+            // Snake is moving down, so round the bottom corners
+            ctx.roundRect(x, y, gridSize, gridSize, [0, 0, 10, 10]);
+
+        } else if (direction.y === -1) {
+            // Snake is moving up, so round the top corners
+            ctx.roundRect(x, y, gridSize, gridSize, [10, 10, 0, 0]);
+        }
+
+    // Round only the outside corners of the tail
+    } else if (index === snake.length - 1) {
+
+        // Find the segment directly before the tail
+        const previous = snake[index - 1];
+
+        if (previous.x < segment.x) {
+            // Tail extends to the right, so round the right corners
+            ctx.roundRect(x, y, gridSize, gridSize, [0, 6, 6, 0]);
+
+        } else if (previous.x > segment.x) {
+            // Tail extends to the left, so round the left corners
+            ctx.roundRect(x, y, gridSize, gridSize, [6, 0, 0, 6]);
+
+        } else if (previous.y < segment.y) {
+            // Tail extends downward, so round the bottom corners
+            ctx.roundRect(x, y, gridSize, gridSize, [0, 0, 6, 6]);
+
+        } else {
+            // Tail extends upward, so round the top corners
+            ctx.roundRect(x, y, gridSize, gridSize, [6, 6, 0, 0]);
+        }
+
+    } else {
+        // Keep all middle segments completely square
+        ctx.rect(x, y, gridSize, gridSize);
+    }
+
+    // Draw the current segment
+    ctx.fill();
+});
+
+
 };
 
 // function to make the food appear and disappear randomly
