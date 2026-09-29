@@ -176,11 +176,77 @@ p, .subtitle {
 }
 
 .game-controls {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-areas:
+    "menu start mode"
+    ". save .";
   gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
+  align-items: center;
   margin-top: 20px;
+}
+
+#backBtn {
+  grid-area: menu;
+}
+
+#startBtn {
+  grid-area: start;
+}
+
+#backToModeBtn {
+  grid-area: mode;
+}
+
+#saveModeBtn {
+  grid-area: save;
+  justify-self: center;
+}
+
+.btn-main-menu {
+  background-color: #ffffff;
+  color: #2f6b3f;
+  border: 1px solid #ffffff;
+}
+
+.btn-main-menu:hover {
+  background-color: #e8f5e9;
+  color: #1f4d2d;
+  transform: translateY(-2px);
+}
+
+.btn-start {
+  background-color: #2f6b3f;
+  color: #ffffff;
+  border: 1px solid #3f7d47;
+}
+
+.btn-start:hover {
+  background-color: #1f4d2d;
+  transform: translateY(-2px);
+}
+
+.btn-level-mode {
+  background-color: #7c3aed;
+  color: #ffffff;
+  border: 1px solid #6d28d9;
+}
+
+.btn-level-mode:hover {
+  background-color: #6d28d9;
+  transform: translateY(-2px);
+}
+
+.btn-save {
+  background-color: #3f7d47;
+  color: #ffffff;
+  border: 1px solid #2f6b3f;
+  grid-column: 2;
+}
+
+.btn-save:hover {
+  background-color: #2f6b3f;
+  transform: translateY(-2px);
 }
 
 /* --- LEVEL SELECTION GRID --- */
@@ -284,4 +350,15 @@ canvas {
   font-size: 2rem;
   color: #f43f5e;
   margin-bottom: 10px;
+}
+
+@media (max-width: 600px) {
+  .game-controls {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "menu"
+      "start"
+      "mode"
+      "save";
+  }
 }
