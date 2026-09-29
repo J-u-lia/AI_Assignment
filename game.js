@@ -8,6 +8,13 @@ const gridSize = 20;
 // calculates how many grid squares fit across the canvas
 const tileCount = canvas.width / gridSize; // 400px / 20 = 20 tiles
 
+// load the apple image for the game
+const foodImage = new Image();
+
+foodImage.onload = () => drawGame();
+
+foodImage.src = "assets/apple.png";
+
 // COLOR PALETTE - it's a variable holding an arrray
 // array of the different colors for the snake
 // green, blue, red, purple, orange, turqoise
@@ -730,15 +737,30 @@ const drawGame = () => {
     }
   }
 
-  // if the food is visible then draw it
+  // If the food is visible, draw the apple
   if (foodVisible) {
-    ctx.fillStyle = "red";  // make it red
-    ctx.fillRect( // make it one grid-size square
-      food.x * gridSize,
-      food.y * gridSize,
-      gridSize,
-      gridSize
-    );
+
+      // Use the PNG apple if it has loaded
+      if (foodImage.complete && foodImage.naturalWidth > 0) {
+          ctx.drawImage(
+              foodImage,
+              food.x * gridSize,
+              food.y * gridSize,
+              gridSize,
+              gridSize
+          );
+      } 
+      
+      // If the PNG cannot be loaded, use a red square instead
+      else {
+          ctx.fillStyle = "red";
+          ctx.fillRect(
+              food.x * gridSize,
+              food.y * gridSize,
+              gridSize,
+              gridSize
+          );
+      }
   }
 
   // draw the snake with the array snakeColor so every game there is a new color
