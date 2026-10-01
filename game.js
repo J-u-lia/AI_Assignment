@@ -45,6 +45,10 @@ const DIFFICULTY_CONFIG = {
 let movingBlockX = 2;   // stores the current horizontal position of the moving obsitacl and it starts at 2
 let movingBlockDir = 1; // stores the direction which the obstical is travelling 1 means right/-1 left
 
+// global variables for making the cross in level 6 "breath"
+let crossOffset = 0;  // current expansion distance - max is 3
+let crossDir = 1; // movement direction 1 is expanding, -1 is contracting
+
 // LEVEL CONFIGURATIONS - a variable that holds the object with the settings for hte levels
 
 // it creates an object containing the settings for all 10 levels
@@ -124,24 +128,38 @@ const LEVEL_CONFIGS = {
     name: "The Cross",
     targetScore: 35,
     wrapScreen: false,
+    hasBreathingCross: true,   // has a cross that expands and contracts
 
     startSnake: [
-      { x: 8, y: 8 }, // Head
-      { x: 8, y: 7 }, // Body
-      { x: 8, y: 6 }  // Tail
+      { x: 9, y: 8 }, // Head
+      { x: 9, y: 7 }, // Body
+      { x: 9, y: 6 }  // Tail
     ],
     startDirection: { x: 0, y: 1 },
 
     getObstacles: () => {
       const obs = [];
-      // Horizontal bar leaving a middle gap
-      for (let x = 3; x <= 16; x++) {
-        if (x < 8 || x > 11) obs.push({ x, y: 10 });
+
+      // Horizontal Left Bar (moves left by crossOffset)
+      for (let x = 3; x <= 7; x++) {
+        obs.push({ x: x - crossOffset, y: 10 });
       }
-      // Vertical bar leaving a middle gap
-      for (let y = 3; y <= 16; y++) {
-        if (y < 8 || y > 11) obs.push({ x: 10, y });
+
+      // Horizontal Right Bar (moves right by crossOffset)
+      for (let x = 12; x <= 16; x++) {
+        obs.push({ x: x + crossOffset, y: 10 });
       }
+
+      // Vertical Top Bar (moves up by crossOffset)
+      for (let y = 3; y <= 7; y++) {
+        obs.push({ x: 10, y: y - crossOffset });
+      }
+
+      // Vertical Bottom Bar (moves down by crossOffset)
+      for (let y = 12; y <= 16; y++) {
+        obs.push({ x: 10, y: y + crossOffset });
+      }
+
       return obs;
     },
     portals: [],
@@ -398,6 +416,10 @@ function prepareGame() {
   // the color of the snake is chosen randomly every game
   snakeColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
 
+  // reset the constant for the breathing effect in level 6
+  crossOffset = 0;
+  crossDir = 1;
+
   // if the game mode is level (?) then get the configuration data for the specific level
   // if not (:) in level mode then there is no level configuration needed
   const currentConfig = activeMode === "level" ? LEVEL_CONFIGS[currentLevel] : null;
@@ -522,20 +544,38 @@ function gameLoop() {
 // a function to controll the movement for the obsticales
 // my obstacles only move horizontally
 function updateMovingObstacles() {
-  // becasue the obsticales are only available in the level mode if the player is in the difficulty mode then stop
-  if (activeMode !== "level") return;
   // the function needs to know on which level the player currently is so the settings for this level are got
-  const config = LEVEL_CONFIGS[currentLevel];
+  const config = activeMode === "level" ? LEVEL_CONFIGS[currentLevel] : null;
+  
+  // becasue the obsticales are only available in the level mode if the player is in the difficulty mode then stop
+  if (!config) return;
+  
   // if the level doesnt exist or the level doesnt have a moving obsticle then nothing to do
-  if (!config || !config.hasMovingObstacle) return;
-  // if there is a level with an obstacle move it according to its current direction
-  // so it takes the current positon of x and then adds 0.25 or subtracts 0.25 (depends if he moves right or left)
-  // the bigger the number the less smooth the block moves
-  movingBlockX += movingBlockDir * 0.25;
-  // the borders for the obstical where it can move - if it reaches either side the direction is changed
-  if (movingBlockX >= 16 || movingBlockX <= 1) {  // can move from 1 - 16
-    movingBlockDir *= -1; // changing direction
+  if (config.hasMovingObstacle){
+    // if there is a level with an obstacle move it according to its current direction
+    // so it takes the current positon of x and then adds 0.25 or subtracts 0.25 (depends if he moves right or left)
+    // the bigger the number the less smooth the block moves
+    movingBlockX += movingBlockDir * 0.25;
+
+    // the borders for the obstical where it can move - if it reaches either side the direction is changed
+    if (movingBlockX >= 16 || movingBlockX <= 1) {  // can move from 1 - 16
+      movingBlockDir *= -1; // changing direction
+    }
   }
+  
+  if (config.hasBreathingCross) {
+    // update the breathing effect for the cross in level 6
+    crossOffset += 0.2 * crossDir; // increase or decrease the offset based on the direction
+    if (crossOffset >= 3){
+      crossOffset = 3; // limit the offset to 3
+      crossDir = -1; // change direction to contract
+    }
+    else if (crossOffset <= 0){
+      crossOffset = 0; // limit the offset to 0
+      crossDir = 1; // change direction to expand 
+    }
+  }
+
 }
 
 // the brain behind letting the snake move the way the player wants
@@ -591,8 +631,22 @@ function moveSnake() {
         triggerGameOver();
         return;
       }
+
+      // Check if snake head (1x1 unit at head.x, head.y) overlaps obstacle (1x1 unit at obs.x, obs.y)
+      const overlapsHead =
+        head.x < obs.x + 1 &&
+        head.x + 1 > obs.x &&
+        head.y < obs.y + 1 &&
+        head.y + 1 > obs.y;
+
+      if (overlapsHead) {
+        triggerGameOver();
+        return;
+      }
     }
   }
+
+
 
   // go thorugh every piece of the snake
   for (let segment of snake) {
@@ -732,8 +786,8 @@ const drawGame = () => {
     for (const obs of obstacles) {
       // and draw each obstical as one grid-sized square 
       ctx.fillRect(
-        Math.floor(obs.x) * gridSize,
-        Math.floor(obs.y) * gridSize,
+        obs.x * gridSize,
+        obs.y * gridSize,
         gridSize,
         gridSize
       );
