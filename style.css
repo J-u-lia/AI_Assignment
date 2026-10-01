@@ -238,6 +238,13 @@ p, .subtitle {
   margin-top: 20px;
 }
 
+.save-controls-group {
+  grid-area: save;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
 /*# selects the elemtn by their ID*/
 #backBtn {
   grid-area: menu;
@@ -249,11 +256,6 @@ p, .subtitle {
 
 #backToModeBtn {
   grid-area: mode;
-}
-
-#saveModeBtn {
-  grid-area: save;
-  justify-self: center;
 }
 
 .btn-main-menu {
@@ -486,6 +488,27 @@ canvas {
   font-size: 2rem;
   color: #ffffff;
   margin-bottom: 10px;
+}
+
+/* ----NOTIFICATION FOR SAVING ---- */
+
+.save-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ffffff;
+  color: #000000;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.save-notification.hidden {
+  display: none;
 }
 
 /*with the @media you tell the browser to only use these rules when the screen is 600px wide or smaller*/

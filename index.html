@@ -102,6 +102,10 @@
             </div>
         </div>
 
+        <div id="saveNotification" class="save-notification hidden">
+            Game saved successfully!
+        </div>
+
         <!-- Unified Game Screen -->
         <div id="gameScreen" class="screen">
             <div class="card">
@@ -161,9 +165,11 @@
                     </button>
 
                     <!-- Save button goes underneath Start/Pause button -->
-                    <button id="saveModeBtn" class="btn btn-save">
-                        Save Progress
-                    </button>
+                    <div class="save-controls-group">
+                        <button id="saveModeBtn" class="btn btn-save">Save Progress</button>
+                        <!-- Starts hidden by default -->
+                        <button id="continueBtn" class="btn btn-save hidden">Continue Saved Game</button>
+                    </div>
 
                 </div>
             </div>

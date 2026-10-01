@@ -327,6 +327,9 @@ let isChangingDirection = false; // player cant change direction multiple times 
 // it is an arrow function (=>), arrow functions tell JS to take the inputs in the () and put them into the code in the {}
 // arrow functions are shorter and easier to read
 document.addEventListener("DOMContentLoaded", () => {
+  // to load the button if needed directly at the beginning so the button appears immediately
+  updateContinueButtonVisibility();
+
   // arrow function makes more sense here becasue the function only exists for the click events
   highScoreDisplay.textContent = highScore; // put the saved highscore into the html element with the id highScoreDisplay
 
@@ -415,9 +418,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // when the save button is clicked save the current level in the browsers localStorage
   saveModeBtn.addEventListener("click", () => {
-    localStorage.setItem("savedSnakeLevel", currentLevel);
+    stopGame(); // so snake doesnt move whyle saving
+    // set it to paused
+    isPaused = true;
+    pauseOverlay.classList.remove("hidden");
+    // creates a snapshot object of the current game
+    const snapshot = {
+      version: 1.0,
+      activeMode: activeMode,
+      currentLevel: currentLevel,
+      score: score,
+      snake: snake,
+      direction: direction,
+      food: food,
+      currentSpeed: currentSpeed,
+      randomObs: randomObs,
+      crossOffset: crossOffset,
+      crossDir: crossDir
+    };
+    // Convert object to text and store in localStorage
+    localStorage.setItem("snakeSave", JSON.stringify(snapshot));
+    
     // show a popup message telling the player that the progress has been saved
-    alert(`Progress saved! Level ${currentLevel} recorded.`);
+    showSaveNotification(`Game saved! Level ${currentLevel} with ${score} points.`);
+    // Immediately reveal/update the Continue button!
+    updateContinueButtonVisibility();
   });
 });
 
@@ -431,6 +456,19 @@ function showScreen(screenToShow) {
   // first all screens need to be hidden so the active class needs to be removed and then added to the screen we want to show
   document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
   screenToShow.classList.add("active");
+}
+
+// a function for the little notification if you safe the game
+function showSaveNotification(message) {
+  // cretats the variable notification
+  const notification = document.getElementById("saveNotification");
+  // it displays the message
+  notification.textContent = message;
+  notification.classList.remove("hidden");
+  // is shown for 2.5 seconds then dissapears automatically
+  setTimeout(() => {
+    notification.classList.add("hidden");
+  }, 2500);
 }
 
 // PREPARE GAME and SPAWN LOGIC
@@ -545,7 +583,7 @@ function prepareGame() {
   isChangingDirection = false;  // snake hasn't changed direction yet
 
   currentScoreDisplay.textContent = score;  // updates the score on the display
-  pauseOverlay.classList.remove("hidden");  // the pause/start display shoult be hidden
+  pauseOverlay.classList.remove("hidden");  // the pause/start display should not be hidden
   gameOverOverlay.classList.add("hidden");  // the game isn't over so no game-over display
 
   spawnFood();  // the first food can be created
@@ -612,14 +650,14 @@ document.getElementById("nextLevelBtn").addEventListener("click", () => {
   document.getElementById("levelCompleteOverlay").classList.add("hidden");
   
   prepareGame();  // Reset state for new level
-  startGame();    // Resume game
+  togglePause();    // Resume game
 });
 
 // Replay Level Button Click
 document.getElementById("replayLevelBtn").addEventListener("click", () => {
   document.getElementById("levelCompleteOverlay").classList.add("hidden");
   prepareGame();  // Reset current level
-  startGame();    // Resume game
+  togglePause();    // Resume game
 });
 
 // the main loop for the game - it needs to be called repedetly while game is running
@@ -1349,5 +1387,138 @@ function playSound(type) {
     gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);  // fade sound over 0.2 seconds
     oscillator.start(now);  // start the sound
     oscillator.stop(now + 0.2); // stop it after 0.2 seconds
+  }
+}
+
+// a function to check if the player has saved a game
+// player can decide if he wants to restore or continue the game
+function updateContinueButtonVisibility() {
+  // find the continueBtn
+  const continueBtn = document.getElementById("continueBtn");
+  // if the button doesn't exist then return
+  if (!continueBtn) return;
+  // load the saved game from the storage with the key snakeSave
+  const savedData = localStorage.getItem("snakeSave");
+
+  // if there is saved Data
+  if (savedData) {
+    // it should try to run this code
+    try {
+      // the saved data is in a string so convert that back in an Js object to use the things like snapshot.level
+      const snapshot = JSON.parse(savedData);
+      
+      // If valid saved data exists show the button and update its label with the saved level
+      continueBtn.classList.remove("hidden");
+      continueBtn.textContent = `Continue Level ${snapshot.currentLevel} (${snapshot.score} pts)`;
+    }
+    // if there goes sth wrong then the continue button is hidden
+    catch (e) {
+      // If parsing fails or data is corrupted, hide the button
+      continueBtn.classList.add("hidden");
+    }
+    // also if there was no saved data the button should be hidden
+  } else {
+    continueBtn.classList.add("hidden");
+  }
+}
+
+// find the continue button and if the player clicks it then
+document.getElementById("continueBtn").addEventListener("click", () => {
+  // run the loadSavedGame
+  const success = loadSavedGame();
+
+  // if loading the saved game worked 
+  if (success) {
+    // hide the level complete overlay after the saved game has loaded
+    document.getElementById("levelCompleteOverlay").classList.add("hidden");
+  }
+});
+
+// a function to load the data of a saved Game of the local storage of the browser
+function loadSavedGame() {
+  // gets the saved Data from the localStorage
+  const savedData = localStorage.getItem("snakeSave");
+  
+  // Checks if there is actually a saved game
+  if (!savedData) {
+    // if not then a little alert
+    alert("No saved game found!");
+    return false;
+  }
+
+  try{
+    // if there is a game then parse string back into JavaScript object
+    const snapshot = JSON.parse(savedData);
+
+    // check if the saved data exists and that it is the correct version and that it has the snake
+    // Validation check (ensure version matches and required fields exist)
+    if (!snapshot || snapshot.version !== 1 || !snapshot.snake) {
+      // if not a little alert
+      alert("Saved data is invalid or outdated!");
+      return false;
+    }
+
+    // stop the game
+    stopGame(); 
+
+    // Apply saved state directly without calling prepareGame()
+    activeMode = snapshot.activeMode;
+    currentLevel = snapshot.currentLevel;
+    score = snapshot.score;
+    snake = snapshot.snake;
+    direction = snapshot.direction;
+    food = snapshot.food;
+    currentSpeed= snapshot.currentSpeed;
+    randomObs= snapshot.randomObs;
+    crossOffset= snapshot.crossOffset;
+    crossDir= snapshot.crossDir;
+
+
+    const currentConfig = LEVEL_CONFIGS[currentLevel];
+
+
+    // make sure the level configuration exists
+    if (!currentConfig) {
+      alert("The saved level could not be found!");
+      return false;
+    }
+
+    // restore the level settings:
+    targetScore = currentConfig.targetScore;  // restore the target score for this level
+    baseSpeed = Math.max(140 - currentLevel * 6, 60);     // restore the normal level speed
+    speedIncrementFactor = 1.5;     // level mode uses this speed increase
+    showGrid = true;      // level mode shows the grid
+    isUltraMode = false;      // level mode is not ultra mode
+
+    // display the saved score on the screen
+    if (currentScoreDisplay) currentScoreDisplay.textContent = score;
+    // update the game header with the saved level
+    levelGameHeader.textContent =
+      `Level ${currentLevel}: ${currentConfig.name} (Target: ${targetScore} pts)`;
+
+    // make sure the game over screen is hidden
+    gameOverOverlay.classList.add("hidden");
+    // hide the level complete screen if it is visible
+    document.getElementById("levelCompleteOverlay").classList.add("hidden");
+
+    // the game should be paused when the saved game is loaded
+    isPaused = true;
+    // the game is not over
+    isGameOver = false;
+    // reset the direction change lock
+    isChangingDirection = false;
+    // show the game screen
+    showScreen(gameScreen);
+    // show the pause overlay because the loaded game starts paused
+    pauseOverlay.classList.remove("hidden");
+    // draw the saved snake and food
+    drawGame();
+    // tell the code that loading worked
+
+    return true;
+  }
+  catch(err){
+    console.error("Error loading saved game:", err);
+    return false;
   }
 }
