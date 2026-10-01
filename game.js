@@ -62,7 +62,7 @@ const LEVEL_CONFIGS = {
   },
   // level 2
   2: {
-    name: "The Four Pillars",   // the title
+    name: "Four Obstials",   // the title
     targetScore: 15,    // player needs to get 15 points
     wrapScreen: false,  // still no teleporting
     getObstacles: () => [   // but there are 4 symetrical obsticals which are created here
@@ -80,7 +80,7 @@ const LEVEL_CONFIGS = {
   },
   // level 3
   3: {
-    name: "Center Box",     // title
+    name: "Static Box",     // title
     targetScore: 20,    // needs 20 points
     wrapScreen: false,  // no teleporting
     getObstacles: () => {   // one obstical
@@ -100,7 +100,7 @@ const LEVEL_CONFIGS = {
   },
   // level 4
   4: {
-    name: "Screen Wrap",
+    name: "Wall Teleporting",
     targetScore: 25,    // needs 25 points
     wrapScreen: true,   // snake can portal now thorugh walls
     getObstacles: () => [], // there are no obsticals
@@ -109,7 +109,7 @@ const LEVEL_CONFIGS = {
   },
   // level 5
   5: {
-    name: "The Portal Pair",
+    name: "Portal Pair",
     targetScore: 30,    // neds 30 points
     wrapScreen: false,  // no traveling through walls
     getObstacles: () => [], // no obsticals
@@ -121,9 +121,17 @@ const LEVEL_CONFIGS = {
   },
   // level 6
   6: {
-    name: "The Maze / Cross",
+    name: "The Cross",
     targetScore: 35,
     wrapScreen: false,
+
+    startSnake: [
+      { x: 8, y: 8 }, // Head
+      { x: 8, y: 7 }, // Body
+      { x: 8, y: 6 }  // Tail
+    ],
+    startDirection: { x: 0, y: 1 },
+
     getObstacles: () => {
       const obs = [];
       // Horizontal bar leaving a middle gap
@@ -157,7 +165,7 @@ const LEVEL_CONFIGS = {
   },
   // level 8
   8: {
-    name: "Double Portals",
+    name: "Double Portal",
     targetScore: 45,
     wrapScreen: false,  // no going through walls
     getObstacles: () => [   // there are obsticals as vertical walls
@@ -194,7 +202,7 @@ const LEVEL_CONFIGS = {
   },
   // level 10
   10: {
-    name: "The Gauntlet",
+    name: "Total Chaos",
     targetScore: 60,
     wrapScreen: true,   // can go through walls
     hasMovingObstacle: true,    // has moving obsticals
@@ -419,45 +427,60 @@ function prepareGame() {
     return false;
   };
 
-  // initial position for the snake to spawn it to (liek a first guess)
-  let spawnX = 10;
-  let spawnY = 10;
+  // to give certain levels the predefined snake position
+  // if there is a configuration for a level (so if you are in the lvel mode) and that level has a starting position it should get the startSnake
+  // if there is no configuration then undefined - prevents crashing
+  if (currentConfig?.startSnake){
+    // the ... is the spread operator - takes the items inside of something (in this case an array) and copies them into a new array
+    // he copies the variables x and y for the head, body and tail of the startSnake array of level 6 into the array for the snake
+    // this way the level's original starting configuration stays always the same because only the snake array gets updated while the snake moves 
+    snake = [...currentConfig.startSnake];
+  }
+  // for the other levels it creates a safe starting positoon automatically
+  else{
+    // initial position for the snake to spawn it to (liek a first guess)
+    let spawnX = 10;
+    let spawnY = 10;
 
-  // puts the spawnX and spawnY guesses in the isOccupied function and looks if these and the two cells behind it are occupied
-  // the snake is 3 cells long
-  // if they are occupied then run the code
-  if (isOccupied(spawnX, spawnY) || isOccupied(spawnX - 1, spawnY) || isOccupied(spawnX - 2, spawnY)) {
-    // it is occupied so no safe spot guessed
-    let foundSafeSpot = false;  // to track if a position thats not occupied is found
-    // this searches through the game board
-    // first the y axis - it starts at 2 because 0 and 1 are to close to the wall
-    for (let y = 2; y < tileCount - 2; y++) {   // it starts at 2 and then increases the y by 1 so it goes from cell to cell until it is at the cell before the wall
-      // for each y it goes through the columns and tries every x if it has reached the end of the row then the y is getting increased by 1
-      // it starts at 3 becasue the snake needs 3 horizntal cells
-      for (let x = 3; x < tileCount - 2; x++) {
-        // checks if the three positions are all free
-        // 1: the head so (x,y) 2: the body so one cell behind the x horizontally 3: the tail so two cells behind the head horizontally
-        if (!isOccupied(x, y) && !isOccupied(x - 1, y) && !isOccupied(x - 2, y)) {
-          // if all these are not occupied then the coordinates spawnX and spawnY become the x and y
-          spawnX = x;
-          spawnY = y;
-          foundSafeSpot = true; // a safe spot is found
-          break;
+    // puts the spawnX and spawnY guesses in the isOccupied function and looks if these and the two cells behind it are occupied
+    // the snake is 3 cells long
+    // if they are occupied then run the code
+    if (isOccupied(spawnX, spawnY) || isOccupied(spawnX - 1, spawnY) || isOccupied(spawnX - 2, spawnY)) {
+      // it is occupied so no safe spot guessed
+      let foundSafeSpot = false;  // to track if a position thats not occupied is found
+      // this searches through the game board
+      // first the y axis - it starts at 2 because 0 and 1 are to close to the wall
+      for (let y = 2; y < tileCount - 2; y++) {   // it starts at 2 and then increases the y by 1 so it goes from cell to cell until it is at the cell before the wall
+        // for each y it goes through the columns and tries every x if it has reached the end of the row then the y is getting increased by 1
+        // it starts at 3 becasue the snake needs 3 horizntal cells
+        for (let x = 3; x < tileCount - 2; x++) {
+          // checks if the three positions are all free
+          // 1: the head so (x,y) 2: the body so one cell behind the x horizontally 3: the tail so two cells behind the head horizontally
+          if (!isOccupied(x, y) && !isOccupied(x - 1, y) && !isOccupied(x - 2, y)) {
+            // if all these are not occupied then the coordinates spawnX and spawnY become the x and y
+            spawnX = x;
+            spawnY = y;
+            foundSafeSpot = true; // a safe spot is found
+            break;
+          }
         }
+        // if there is a spafe spot found then it doesn't need to keep trying it can take this spot
+        if (foundSafeSpot) break;
       }
-      // if there is a spafe spot found then it doesn't need to keep trying it can take this spot
-      if (foundSafeSpot) break;
     }
+
+    // then the snake can be put activly in the safe spot that has been calculated before
+    snake = [
+      { x: spawnX, y: spawnY },
+      { x: spawnX - 1, y: spawnY },
+      { x: spawnX - 2, y: spawnY }
+    ];
   }
 
-  // then the snake can be put activly in the safe spot that has been calculated before
-  snake = [
-    { x: spawnX, y: spawnY },
-    { x: spawnX - 1, y: spawnY },
-    { x: spawnX - 2, y: spawnY }
-  ];
-
-  direction = { x: 1, y: 0 }; // snake initially starts moving to the right
+  // becasue level 6 has its own starting direction 
+  direction = currentConfig?.startDirection ?? { x: 1, y: 0 }; // snake initially starts moving to the right
+  
+  
   score = 0;  // the score starts at 0
   currentSpeed = baseSpeed; // the starting speed is set
   movingBlockX = 2; // starting position of the moving obsticale
@@ -937,6 +960,12 @@ document.addEventListener("keydown", (e) => {
 
   // if the game is over, paused or the player has already changed direction during this gametic then nothing should happen if the keys are pressde
   if (isGameOver || isPaused || isChangingDirection) return;
+  
+  // if the key pressed is one of the arrows then the browser should not do what he normally would do
+  if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+    e.preventDefault();
+  }
+
   // if not then the snake should respond the following way to the keys:
   // the directions that are checked need to be directly the oposite because else there could be the posibility to run through the snake
   if ((e.key === "ArrowUp" || e.key === "w" || e.key === "W") && direction.y !== 1) {
