@@ -65,7 +65,7 @@ const LEVEL_CONFIGS = {
     // level 1
   1: {
     name: "Open Field", // named open field
-    targetScore: 2,    // player needs 10 points to complete the level
+    targetScore: 10,    // player needs 10 points to complete the level
     wrapScreen: false,  // the snake cant teleport throuigh the walls
     // is an arrow function which returns an empty array
     getObstacles: () => [], // 1 has no obsticals so the array is empty
@@ -244,20 +244,23 @@ const LEVEL_CONFIGS = {
       { x: 14, y: 14 }, { x: 15, y: 14 }
     ],
       
-    getObstacles: () => [   // it has moving and not moving obsticals
-      // static
-      ...this.fixedObstacles,
-      // moving
-      { x: randomObs.x, y: randomObs.y },
-      { x: randomObs.x + 1, y: randomObs.y }
-    ],
+    getObstacles() {
+      return [
+        // it has moving and not moving obsticals
+        // static
+        ...this.fixedObstacles,
+        // moving
+        { x: randomObs.x, y: randomObs.y },
+        { x: randomObs.x + 1, y: randomObs.y }
+      ];
+    },
     portals: [  // has also portals
       { entry: { x: 1, y: 18 }, exit: { x: 18, y: 1 }, color: "#ef4444" },
       { entry: { x: 18, y: 1 }, exit: { x: 1, y: 18 }, color: "#ef4444" }
     ],
     speedTraps: [   // and a speed trap
-      { minX: 9, maxX: 10, minY: 0, maxY: 19 }
-    ]
+      { minX: 5, maxX: 10, minY: 0, maxY: 19 }
+    ]  
   }
 };
 
@@ -929,33 +932,6 @@ function moveSnake() {
       triggerLevelComplete();  // then the level complete screen is shown
       return;
     }
-
-    // the speed shpuld increase the longer the snake gets to make the game harder
-    // the increase is based on the score and a constant factor
-    // so from the current speed the calculateed number is substracted every time the snake ate sth but it can't go lower then 30
-    currentSpeed = Math.max(30, baseSpeed - score * speedIncrementFactor);
-    
-    // Check speed trap corridors
-    // is the current level existing and does it have speed traps
-    if (currentConfig && currentConfig.speedTraps) {
-      // if so then go through every speed trap of that level
-      for (const trap of currentConfig.speedTraps) {
-        // if the snakes head is inside the speed trap area - needs to fulfill everything to be considerd inside
-        if (head.x >= trap.minX && head.x <= trap.maxX && head.y >= trap.minY && head.y <= trap.maxY) {
-          // the current speed is divided by 2 so the snake gets double so fast
-          currentSpeed = Math.floor(currentSpeed / 2);
-          break;
-        }
-      }
-    }
-
-    // if the game is not paused and not over so it is running
-    if (!isPaused && !isGameOver) {
-      // then if there is a game timer on stop it because the speed has changed
-      if (gameInterval) clearInterval(gameInterval);
-      // start the game loop again but with the new speed
-      gameInterval = setInterval(gameLoop, currentSpeed);
-    }
     // because the old food was eaten make a new one
     spawnFood();
   }
@@ -966,8 +942,47 @@ function moveSnake() {
   }
   // resets the direction change lock becasue the snake now has finished the movement and now the player can again change a new direction
   isChangingDirection = false;
-}
 
+  // Calculate the normal speed based on the score
+  // the speed shpuld increase the longer the snake gets to make the game harder
+  // the increase is based on the score and a constant factor
+  // so from the current speed the calculateed number is substracted every time the snake ate sth but it can't go lower then 30
+  const normalSpeed = Math.max(30, baseSpeed - score * speedIncrementFactor);
+
+  // creates an Variable isInSpeedTrap which can contain False or True -   to check if any part of the snake is inside a speed trap
+  // it then looks if in the current settings of the level is a speed trap if so then tet the speedTraps if not it gives undefined
+  // because the ?? say if it is undefinde then do the thing on the right if it is undefined there is a empty array
+  // for the tests the trap is called trap
+  const isInSpeedTrap = (currentConfig?.speedTraps ?? []).some(trap =>
+    // .some then checks the items in the array snake and looks if at least one of the items pass the conditions
+    snake.some(segment =>
+      segment.x >= trap.minX &&
+      segment.x <= trap.maxX &&
+      segment.y >= trap.minY &&
+      segment.y <= trap.maxY
+    )
+  );
+
+  // if so then make the snake faster
+  // the current speed is divided by 2 so the snake gets double so fast
+  // Otherwise, use the normal speed
+  const desiredSpeed = isInSpeedTrap ? Math.max(30, normalSpeed / 2) : normalSpeed;
+
+
+  // Only change the game timer if the speed has actually changed
+  if (desiredSpeed !== currentSpeed) {
+    // Save the new speed
+    currentSpeed = desiredSpeed;
+
+    // If the game is running, restart the timer with the new speed
+    if (!isPaused && !isGameOver) {
+      // then if there is a game timer on stop it because the speed has changed
+      if (gameInterval) clearInterval(gameInterval);
+      // Start a new timer using the new speed
+      gameInterval = setInterval(gameLoop, currentSpeed);
+    }
+  }
+}
 
 // DRAWING GAME ELEMENTS
 const drawGame = () => {
