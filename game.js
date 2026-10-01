@@ -360,7 +360,10 @@ document.addEventListener("DOMContentLoaded", () => {
         // the data is then get from the bittom and it is converted from a string into a number
       currentLevel = parseInt(e.target.getAttribute("data-level"), 10);
       activeMode = "level"; // tell the current mode
-        // get the configuration for the selected level
+
+      updateContinueButtonVisibility();
+
+      // get the configuration for the selected level
       const config = LEVEL_CONFIGS[currentLevel] || LEVEL_CONFIGS[1];
       targetScore = config.targetScore; // get the required score to complete this level
         // calculate the starting speed based on the level
@@ -385,6 +388,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // when the player clicks the start difficulty game button then the difficulty mode is being used
   startDiffGameBtn.addEventListener("click", () => {
     activeMode = "difficulty";  // set to difficulty mode
+
+    updateContinueButtonVisibility();
+
     // it needs to be read what radio button is selected
     const selectedDifficulty = document.querySelector('input[name="gameDifficulty"]:checked').value;
     // the configuration for the selected difficulty
@@ -437,7 +443,7 @@ document.addEventListener("DOMContentLoaded", () => {
       crossDir: crossDir
     };
     // Convert object to text and store in localStorage
-    localStorage.setItem("snakeSave", JSON.stringify(snapshot));
+    localStorage.setItem(`snakeSaveLevel${currentLevel}`, JSON.stringify(snapshot));
     
     // show a popup message telling the player that the progress has been saved
     showSaveNotification(`Game saved! Level ${currentLevel} with ${score} points.`);
@@ -1397,8 +1403,15 @@ function updateContinueButtonVisibility() {
   const continueBtn = document.getElementById("continueBtn");
   // if the button doesn't exist then return
   if (!continueBtn) return;
+
+  // Continue is only available in Level Mode
+  if (activeMode !== "level") {
+    continueBtn.classList.add("hidden");
+    return;
+  }
+
   // load the saved game from the storage with the key snakeSave
-  const savedData = localStorage.getItem("snakeSave");
+  const savedData = localStorage.getItem(`snakeSaveLevel${currentLevel}`);
 
   // if there is saved Data
   if (savedData) {
@@ -1409,7 +1422,7 @@ function updateContinueButtonVisibility() {
       
       // If valid saved data exists show the button and update its label with the saved level
       continueBtn.classList.remove("hidden");
-      continueBtn.textContent = `Continue Level ${snapshot.currentLevel} (${snapshot.score} pts)`;
+      continueBtn.textContent = `Continue Level ${currentLevel} (${snapshot.score} pts)`;
     }
     // if there goes sth wrong then the continue button is hidden
     catch (e) {
@@ -1437,7 +1450,7 @@ document.getElementById("continueBtn").addEventListener("click", () => {
 // a function to load the data of a saved Game of the local storage of the browser
 function loadSavedGame() {
   // gets the saved Data from the localStorage
-  const savedData = localStorage.getItem("snakeSave");
+  const savedData = localStorage.getItem(`snakeSaveLevel${currentLevel}`);
   
   // Checks if there is actually a saved game
   if (!savedData) {

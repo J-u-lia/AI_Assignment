@@ -326,6 +326,10 @@ p, .subtitle {
   transform: translateY(-2px);
 }
 
+#continueBtn.hidden {
+    display: none;
+}
+
 /* --- pause overlay --- */
 
 .pause-icon {
