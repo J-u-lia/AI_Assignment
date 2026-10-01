@@ -49,6 +49,14 @@ let movingBlockDir = 1; // stores the direction which the obstical is travelling
 let crossOffset = 0;  // current expansion distance - max is 3
 let crossDir = 1; // movement direction 1 is expanding, -1 is contracting
 
+// global variable for making a random wandering for the obsticals
+let randomObs = {
+  x: 5,
+  y: 5,
+  vx: 1,  // velocity in x direction (-1, 0, 1)
+  vy: 0 // velocity in y direction (-1, 0, 1)
+};
+
 // LEVEL CONFIGURATIONS - a variable that holds the object with the settings for hte levels
 
 // it creates an object containing the settings for all 10 levels
@@ -167,16 +175,19 @@ const LEVEL_CONFIGS = {
   },
   // level 7
   7: {
-    name: "Moving Obstacle",
+    name: "Random Wanderer",
     targetScore: 40,
     wrapScreen: false,
     hasMovingObstacle: true,    // has obsticals that move
+    hasRandomObstacle: true,    // has obsticals that move randomly
+    obsWidth: 2,   // width of the random obstacle
+    obsHeight: 2,  // height of the random obstacle
     getObstacles: () => [
-        // movingBlockX is a variable that changes while the game is running - the obstical doesn always have the same x position
-      { x: movingBlockX, y: 14 },   // top left square
-      { x: movingBlockX + 1, y: 14 },   // top right square
-      { x: movingBlockX, y: 15 },   // bottom left
-      { x: movingBlockX + 1, y: 15 }    // bottom right
+      // movingBlockX is a variable that changes while the game is running - the obstical doesn always have the same x position
+      { x: randomObs.x, y: randomObs.y },         // Top-left
+      { x: randomObs.x + 1, y: randomObs.y },     // Top-right
+      { x: randomObs.x, y: randomObs.y + 1 },     // Bottom-left
+      { x: randomObs.x + 1, y: randomObs.y + 1 }  // Bottom-right
     ],
     portals: [],
     speedTraps: []
@@ -224,10 +235,21 @@ const LEVEL_CONFIGS = {
     targetScore: 60,
     wrapScreen: true,   // can go through walls
     hasMovingObstacle: true,    // has moving obsticals
+    hasRandomObstacle: true,    // has obsticals that move randomly
+    obsWidth: 2,   // width of the random obstical
+    obsHeight: 1,  // height of the random obstical
+    
+    fixedObstacles: [
+      { x: 5, y: 5 }, { x: 6, y: 5 },
+      { x: 14, y: 14 }, { x: 15, y: 14 }
+    ],
+      
     getObstacles: () => [   // it has moving and not moving obsticals
-      { x: 5, y: 5 }, { x: 6, y: 5 }, 
-      { x: 14, y: 14 }, { x: 15, y: 14 },
-      { x: movingBlockX, y: 2 }, { x: movingBlockX + 1, y: 2 }
+      // static
+      ...this.fixedObstacles,
+      // moving
+      { x: randomObs.x, y: randomObs.y },
+      { x: randomObs.x + 1, y: randomObs.y }
     ],
     portals: [  // has also portals
       { entry: { x: 1, y: 18 }, exit: { x: 18, y: 1 }, color: "#ef4444" },
@@ -420,6 +442,13 @@ function prepareGame() {
   crossOffset = 0;
   crossDir = 1;
 
+  // reset the random wandering variables
+  if (currentLevel === 10) {
+    randomObs = { x: 8, y: 3, vx: 1, vy: 0 }; // starting for Level 10
+  } else {
+    randomObs = { x: 5, y: 5, vx: 1, vy: 0 }; // starting spot Level 7
+  }
+
   // if the game mode is level (?) then get the configuration data for the specific level
   // if not (:) in level mode then there is no level configuration needed
   const currentConfig = activeMode === "level" ? LEVEL_CONFIGS[currentLevel] : null;
@@ -541,8 +570,52 @@ function gameLoop() {
   drawGame(); // redraw the board - important that this is after everything has been updated or else the updates are always one behing
 }
 
+// function that checks if a position contains a fixed obstacle, portal or speed trap
+function isFixedObstacleOrPortal(x, y) {
+  // if the player is in level mode then the settings of the current level need to be loaded
+  // if not then null
+  const currentConfig = activeMode === "level" ? LEVEL_CONFIGS[currentLevel] : null;
+  // if there arent no settings then nothing to do
+  if (!currentConfig) return false;
+
+  // check for fixed obstacles in the settings of this level
+  if (currentConfig.fixedObstacles) {
+    // iterates through every fixed obstacle in the level
+    for (let obs of currentConfig.fixedObstacles) {
+      // it needs to be chekced if the obstacle is at the x and y position that currently is checked by the moving obstacle
+      if (obs.x === x && obs.y === y)
+        // if it is then the position is occupied and the obstacle can't move here
+        return true;
+    }
+  }
+
+  // Check for static portals in the settings of the level
+  if (currentConfig.portals) {
+    // if there are iterate through every portal one by one
+    for (let p of currentConfig.portals) {
+      // check the entry and the exit portals position if they are at the x and y position that is currently checked by the moving obstical
+      if ((p.entry.x === x && p.entry.y === y) || (p.exit.x === x && p.exit.y === y)) {
+        // if so then the positon cannot been moved to
+        return true;
+      }
+    }
+  }
+
+  // Check for static speed traps in the settings of the level
+  if (currentConfig.speedTraps) {
+    // if there are iterate through every single one one by one
+    for (let st of currentConfig.speedTraps) {
+      // check if the speed trap is at the x and y position that is currently checked by the moving obstical
+      if (st.x === x && st.y === y)
+        // if so then the position cannot be moved to
+        return true;
+    }
+  }
+  // if none of the checks found an obstacle then the position is free
+  return false;
+}
+
 // a function to controll the movement for the obsticales
-// my obstacles only move horizontally
 function updateMovingObstacles() {
   // the function needs to know on which level the player currently is so the settings for this level are got
   const config = activeMode === "level" ? LEVEL_CONFIGS[currentLevel] : null;
@@ -576,7 +649,122 @@ function updateMovingObstacles() {
     }
   }
 
+  // check if the current level has a random wandering obstical
+  if (config.hasRandomObstacle) {
+    const speed = 0.1;  // speed of the movement
+
+    // Move in the current direction
+    // takes the current position and adds the velocity (whoch is the direction) multiplied with the speed (how much the obstacle should move each update)
+    randomObs.x += randomObs.vx * speed;  // controls left/right
+    randomObs.y += randomObs.vy * speed;  // controls up/down
+
+    // because speed is a float (0.1) it is highly likely that the have a float
+    // so rounding with Math.round to 2 decimal places
+    randomObs.x = Math.round(randomObs.x * 100) / 100;
+    randomObs.y = Math.round(randomObs.y * 100) / 100;
+
+    // the obstacle should move smoothly so not jump from 5 to 6 but he should take those smalle float steps so 5.1, 5.2, 5.3, ... that is what makes it move smoothe
+    // but the obstacle should not be able to decide he wants to turn now when he is not fully on a tile so on e.g 5.3 and not on 6 because then it would be between tiles
+    // so we need to check if the position of the obstacle is a whole number so we can let it turn
+    // it takes the random current coordinate (x or y) then rounds it so it is the nearest whole number and then subtracts the rounded number from the random position 
+    // if that number then is smaller than 0.01 then it is close enough to a whole number and the obstacle can turn
+    const isAtCellCenterX = Math.abs(randomObs.x - Math.round(randomObs.x)) < 0.01;
+    const isAtCellCenterY = Math.abs(randomObs.y - Math.round(randomObs.y)) < 0.01;
+    // i tried it with Number.isInteger() because then it would be a whole number but that gave false on false points because e.g when number is 5.999 it is basicly 6 but not an Integer so it still says no
+    // with the code above it doesnt need mathematically to be perfect but close enough and then make it perfect afterwards
+    // needs more line of code but is more trustworthy
+    // the check for x and y need to be true so both need to be near the whole number
+    // if both are near enough then it can continue
+    if (isAtCellCenterX && isAtCellCenterY) {
+      // but it can still be that it is not exactly a whole number but just near enough but now we need to set it to a whole number
+      // get the x and y position to the nearest whole number
+      randomObs.x = Math.round(randomObs.x);
+      randomObs.y = Math.round(randomObs.y);
+      
+      // save the current x and y position of the obstacle
+      const currentX = randomObs.x;
+      const currentY = randomObs.y;
+
+      // obstacle is not always same size so get the width of the obstacle from the settings of the level
+      // if there is no setting then it is 2
+      // Level 7 = 2x2, Level 10 = 2x1
+      const width = config.obsWidth || 2;
+      const height = config.obsHeight || 2;
+
+      // create a list of the 4 directions the obstical can choose from
+      const possibleDirections = [
+        // move always one tile
+        { vx: 0, vy: -1 }, // Up
+        { vx: 0, vy: 1 },  // Down
+        { vx: -1, vy: 0 }, // Left
+        { vx: 1, vy: 0 }   // Right
+      ];
+
+      // look through all possible directions and then filter out every direction that is not safe to go to
+      // in the end there are only the directions left that the obstacle can move to
+      const validDirections = possibleDirections.filter((dir) => {
+        // calculate the x and y position of the next tile the obstical would move to if it goes in this direction
+        const nextX = currentX + dir.vx;
+        const nextY = currentY + dir.vy;
+
+        // check if the next tile would be outside the game board so if it is a wall
+        // if it is then this direction is not safe and this will be filtered
+        if (nextX < 0 || nextX + width > tileCount || nextY < 0 || nextY + height > tileCount) {
+          return false;
+        }
+        
+        // needs to check because else if it would only check one tile (as it did before) then that might think he can move for example up but the other tile would have said no because there is sth
+        // check every horizintal part of the obstacle (width is horizontal) - like it checks the colums
+        // if it checks the obstacle in level 7 it runs twice because it is 2 tiles wide
+        for (let w = 0; w < width; w++) {
+          // then check for every horizontal part the vertical part (height is vertical) - like it chekcs the rows
+          // runs twice for level 7 because it is 2 tiles high
+          for (let h = 0; h < height; h++) {
+            // calculate the x and y positiom of the tile that is currently getting checked 
+            // e.g when the tile wants to move to (5,7) and it is 2x2 (level 7) then the first iteration has w and h = 0 so the ckecX and Y would still be (5,7) which is the top left tile
+            // then the second iteration it has w = 1 and h = 0 so the checkX and Y would be (6,7) which is the top right tile, ect.
+            // at the end you have four runs and every run it creates the new position and checks it with the three condiitons
+            const checkX = nextX + w;
+            const checkY = nextY + h;
+            // check if the food is on the next tile
+            // if it is then this will also be filtered out
+            if (food && checkX === food.x && checkY === food.y) {
+              return false;
+            }
+            // check if any segment of the snake is on this tile
+            // if it is then this will be filtered out
+            if (snake && snake.some((segment) => segment.x === checkX && segment.y === checkY)) {
+              return false;
+            }
+            // check if a fixed obstacle, portal or speed trap is there
+            // if so then this will be filtered out
+            if (isFixedObstacleOrPortal(checkX, checkY)) {
+              return false;
+            }
+          }
+        }
+        // if none of these above are filtered out then this direction is safe
+        return true;
+      });
+      // check that there is at least one direction that is safe
+      if (validDirections.length > 0) {
+        // if there is then a random number between 0 and the number of safe directions to choose from is chosen
+        const randomIndex = Math.floor(Math.random() * validDirections.length);
+        // the random number is then used to get the directions in x and y
+        randomObs.vx = validDirections[randomIndex].vx;
+        randomObs.vy = validDirections[randomIndex].vy;
+      }
+      // if there is no safe direction at the moment then the obstacle should not move
+      // but when the path is clear again it can move
+      else {
+        // x and y movement stopped
+        randomObs.vx = 0;
+        randomObs.vy = 0;
+      }
+    }
+  }
 }
+
 
 // the brain behind letting the snake move the way the player wants
 // it happens everytime the snake moves
