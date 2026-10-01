@@ -113,16 +113,35 @@
                 <div class="canvas-container" style="position: relative; display: inline-block;">
                     <canvas id="gameCanvas" width="400" height="400"></canvas>
                     
-                    <div id="pauseOverlay" class="game-over-banner">
+                    <div id="pauseOverlay" class="overlay">
                         <div class="pause-icon">⏸</div>
                         <p>Press Space to continue</p>
                     </div>
-
-                    <div id="gameOverOverlay" class="game-over-banner hidden">
+                    <!-- make it this an overlay but hide it currently -->
+                    <div id="gameOverOverlay" class="overlay hidden">
                         <h2>GAME OVER</h2>
                         <p>Final Score: <span id="finalScoreDisplay">0</span></p>
                         <button id="restartBtn" class="btn btn-restart">Play Again</button>
                     </div>
+
+                    <!-- Level Complete Overlay -->
+                    <div id="levelCompleteOverlay" class="overlay hidden" role="status" aria-live="polite">
+                        <div class="level-complete-card">
+                            <div class="confetti-decor">🎉 🍎 🐍</div>
+                            <h2 class="level-complete-title">Level Cleared!</h2>
+                            <p id="levelCompleteSubtext" class="level-complete-subtext">Apple-solutely brilliant!</p>
+                            
+                            <div class="score-badge">
+                            Score: <span id="completedScore">0</span>
+                            </div>
+
+                            <div class="button-group">
+                            <button id="nextLevelBtn" class="btn btn-primary">Next Level</button>
+                            <button id="replayLevelBtn" class="btn btn-secondary">Replay</button>
+                            </div>
+                        </div>
+                        </div>
+
                 </div>
 
                 <div class="game-controls">

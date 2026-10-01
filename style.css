@@ -21,23 +21,61 @@ body {
   max-width: 650px;
 }
 
+/* --- OVERLAYS --- */
+/*because in the html file the canvas, pauseOverlay, gameOverOverlay, levelCompleteOverlay and level-complete-card are placed inside the canvas-container class the .canvas-container is the parent of these*/
+
+/* canvas-container is the outer box */
+.canvas-container {
+  /*if sth inside the canvas-container (like the overlay) uses position:absolute it uses the canvas as its reference point*/
+  /*need this for the overlays because they should appear on top of the canvas*/
+  position: relative;
+}
+
+/* overlay is placed on top of the canvas */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* because these are 100% the overlay should become the same size as the container so it covers the whole canvas */
+  width: 100%;
+  height: 100%;
+  background: rgba(31, 77, 45, 0.85);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(4px);
+}
+
+/* Hide rule for all overlays */
+/* it is for elements that have both the overlay and the hidden class - so for the pause hidden for example*/
+.overlay.hidden {
+  display: none !important;
+}
+
+
 /* --- SCREEN TRANSITIONS --- */
-.screen {
+/*for every element with the screen class*/
+.screen { 
   display: none;
   width: 100%;
 }
 
+/*for every element with the class screen and aktiv*/
 .screen.active {
   display: block;
   animation: fadeIn 0.3s ease-in-out;
 }
 
+/*the @keyframes is for the css animations
+  you can tell the browser how the animation should look like from the beginning to the end*/
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 /* --- CARD CONTAINERS --- */
+/*for every element with the class card*/
 .card {
   background: #6fa66f;
   border: 1px solid #8fbd8f;
@@ -47,6 +85,7 @@ body {
   text-align: center;
 }
 
+/*for the headers*/
 h1 {
   font-size: 2rem;
   color: #ffffff;
@@ -64,6 +103,8 @@ h3 {
   margin-bottom: 10px;
 }
 
+/*with the , you can apply the same rules to two different things (multiple selectors)
+  in this case it is the element p and the class subtitle*/
 p, .subtitle {
   color: #ffffff;
   font-size: 0.95rem;
@@ -84,18 +125,22 @@ p, .subtitle {
   margin-bottom: 25px;
 }
 
+/*the space between two things means that it should find the second thin inside the first thing
+  in this case find a h3 that is inside the class description-box (descendant of)*/
 .description-box h3 {
   color: #ffffff;
   margin-bottom: 10px;
   text-align: center;
 }
 
+/*to style the whole unnumbered list*/
 .description-box ul {
   display: inline-block;
   text-align: left;
   padding-left: 25px;
 }
 
+/*to style the list items*/
 .description-box li {
   color: #ffffff;
   margin-bottom: 8px;
@@ -158,6 +203,7 @@ p, .subtitle {
   margin-top: 15px;
 }
 
+/*the : is for a state the thing is currently in*/
 .btn-outline:hover {
   background-color: #e8f5e9;
   color: #1f4d2d;
@@ -192,6 +238,7 @@ p, .subtitle {
   margin-top: 20px;
 }
 
+/*# selects the elemtn by their ID*/
 #backBtn {
   grid-area: menu;
 }
@@ -292,6 +339,64 @@ p, .subtitle {
   margin-bottom: 10px;
 }
 
+/* ----- LEVEL COMPLETED OVERLAY ------- */
+.level-complete-card {
+  background-color: #e6f4ea; /* Pale mint panel */
+  border: 4px solid #2e7d32; /* Dark green accent border */
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  max-width: 320px;
+  width: 90%;
+  
+  /* Subtle pop-in animation */
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.confetti-decor {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+}
+
+.level-complete-title {
+  color: #1b5e20; /* Dark green heading */
+  font-size: 1.8rem;
+  margin: 0 0 8px 0;
+}
+
+.level-complete-subtext {
+  color: #388e3c;
+  font-size: 1rem;
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+/* Gold/Orange score badge */
+.score-badge {
+  background-color: #fff8e1;
+  color: #f57c00; /* Gold / Orange accent */
+  border: 2px dashed #ffb74d;
+  font-weight: bold;
+  font-size: 1.2rem;
+  padding: 8px 16px;
+  border-radius: 20px;
+  display: inline-block;
+  margin-bottom: 20px;
+}
+
+/* Pop-In Scale Effect */
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* --- LEVEL SELECTION GRID --- */
 .level-grid {
   display: flex;
@@ -344,6 +449,7 @@ p, .subtitle {
   color: #ffffff;
 }
 
+/*only styles the filling of the radio button*/
 .radio-option input[type="radio"] {
   accent-color: #f97316;
   width: 16px;
@@ -370,20 +476,7 @@ canvas {
   display: block;
 }
 
-/* --- OVERLAYS --- */
-.game-over-banner {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(31, 77, 45, 0.85);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  backdrop-filter: blur(4px);
-}
+/* --- GAME OVER --- */
 
 .game-over-banner.hidden {
   display: none;
@@ -395,6 +488,7 @@ canvas {
   margin-bottom: 10px;
 }
 
+/*with the @media you tell the browser to only use these rules when the screen is 600px wide or smaller*/
 @media (max-width: 600px) {
   .game-controls {
     grid-template-columns: 1fr;

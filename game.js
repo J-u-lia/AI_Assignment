@@ -65,7 +65,7 @@ const LEVEL_CONFIGS = {
     // level 1
   1: {
     name: "Open Field", // named open field
-    targetScore: 10,    // player needs 10 points to complete the level
+    targetScore: 2,    // player needs 10 points to complete the level
     wrapScreen: false,  // the snake cant teleport throuigh the walls
     // is an arrow function which returns an empty array
     getObstacles: () => [], // 1 has no obsticals so the array is empty
@@ -560,6 +560,65 @@ function stopGame() {
   foodTimeout = null;
 }
 
+// a function that makes the level complete screen overlay
+function triggerLevelComplete() {
+  stopGame(); // Pause movement loops
+  // an array with fun little messages to choose from
+  const FUN_MESSAGES = [
+    "Apple-solutely brilliant!",
+    "Level cleared! Nice slithering.",
+    "You're on a roll... or a slither!",
+    "Sss-simply amazing job!"
+  ];
+  // choose a message out of the array
+  const randomMsg = FUN_MESSAGES[Math.floor(Math.random() * FUN_MESSAGES.length)];
+  // update the overlay text and score
+  document.getElementById("levelCompleteSubtext").textContent = randomMsg;
+  document.getElementById("completedScore").textContent = score;
+
+  // Show overlay
+  document.getElementById("levelCompleteOverlay").classList.remove("hidden");
+}
+
+// Next Level Button Click
+document.getElementById("nextLevelBtn").addEventListener("click", () => {
+  // calculate what the next level will be
+  const nextLevel = currentLevel +1;
+  // get the settings for this next level
+  const config = LEVEL_CONFIGS[nextLevel];
+  // if there is no next level so a at level 10
+  if (!config) {
+    // show a message that the player has completed all levels
+    alert("Congratulations! You've completed all levels!");
+    return;
+  }
+
+  // move then to the actual next level
+  currentLevel = nextLevel;
+  // update all the settings fo the new level
+  targetScore = config.targetScore;
+  baseSpeed = Math.max(140 - currentLevel * 6, 60);
+  speedIncrementFactor = 1.5;
+  showGrid = true;
+  isUltraMode = false;
+
+  // update also the header of the new level so that this is in sync with the game shown
+  levelGameHeader.textContent = `Level ${currentLevel}: ${config.name} (Target: ${targetScore} pts)`;
+
+  // hide the level complete screen
+  document.getElementById("levelCompleteOverlay").classList.add("hidden");
+  
+  prepareGame();  // Reset state for new level
+  startGame();    // Resume game
+});
+
+// Replay Level Button Click
+document.getElementById("replayLevelBtn").addEventListener("click", () => {
+  document.getElementById("levelCompleteOverlay").classList.add("hidden");
+  prepareGame();  // Reset current level
+  startGame();    // Resume game
+});
+
 // the main loop for the game - it needs to be called repedetly while game is running
 function gameLoop() {
   // if the game is over or paused then it shouldn't update the game so stop here
@@ -867,11 +926,7 @@ function moveSnake() {
     }
     // if the mode is in level and the score the player got is higher then the score the player needs to get to complete the level
     if (activeMode === "level" && score >= targetScore) {
-      // the game is stopped because he completed the level
-      stopGame();
-      // a little message that he completed that level
-      alert(`Yay, Level ${currentLevel} Completed!`);
-      showScreen(levelSelectScreen);  // automatically gets the player back to the level screen
+      triggerLevelComplete();  // then the level complete screen is shown
       return;
     }
 
@@ -912,6 +967,7 @@ function moveSnake() {
   // resets the direction change lock becasue the snake now has finished the movement and now the player can again change a new direction
   isChangingDirection = false;
 }
+
 
 // DRAWING GAME ELEMENTS
 const drawGame = () => {
