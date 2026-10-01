@@ -259,7 +259,7 @@ const LEVEL_CONFIGS = {
       { entry: { x: 18, y: 1 }, exit: { x: 1, y: 18 }, color: "#ef4444" }
     ],
     speedTraps: [   // and a speed trap
-      { minX: 5, maxX: 10, minY: 0, maxY: 19 }
+      { minX: 7, maxX: 12, minY: 0, maxY: 19 }
     ]  
   }
 };
@@ -365,7 +365,7 @@ document.addEventListener("DOMContentLoaded", () => {
       speedIncrementFactor = 1.5;   // set how much the snakes speed increases during the game
       showGrid = true;  // to make the grid visible
       isUltraMode = false;  // and it is not in ultra hard mode
-        // the save button is visible and change the text on the back button
+      // the save button is visible and change the text on the back button
       saveModeBtn.style.display = "inline-block";
       backToModeBtn.textContent = "← Select Level";
       // to make it the right color
