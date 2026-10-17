@@ -407,11 +407,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // when the player clicks the start difficulty game button then the difficulty mode is being used
   startDiffGameBtn.addEventListener("click", () => {
     activeMode = "difficulty";  // set to difficulty mode
-    updateHighScoreDisplay(); // refreshes highscore
-    updateContinueButtonVisibility();
-
     // it needs to be read what radio button is selected - globally
     selectedDifficulty = document.querySelector('input[name="gameDifficulty"]:checked').value;
+    
+    updateHighScoreDisplay(); // refreshes highscore
+    updateContinueButtonVisibility();
+        
     // the configuration for the selected difficulty
     const config = DIFFICULTY_CONFIG[selectedDifficulty];
     baseSpeed = config.baseSpeed;   // the starting speed from the difficulty settings
