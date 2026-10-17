@@ -303,10 +303,30 @@ let direction = { x: 1, y: 0 }; // sets the starting direction of the snake to r
 let food = { x: 15, y: 15 };   //creates the food objects with a starting position
 let score = 0;  // stores the current score and it is at the beginning 0
 
-let highScore = localStorage.getItem("snakeHighScore") || 0;    // gets the saved high score from the browsers storage and if its not safed then its 0
 let activeMode = "difficulty";  //stores which game mode is currently being played starts as difficulty can become level
 let currentLevel = 1;   // level starts at 1
 let targetScore = 10;   // the score that the player needs to get to complete the level
+
+// store selected difficulty globally for difficulty mode
+let selectedDifficulty = "easy"; 
+
+// builds a dynamic key for each level or difficulty
+function getHighScoreKey() {
+  return activeMode === "level"
+    ? `level-${currentLevel}`
+    : `difficulty-${selectedDifficulty}`;
+}
+
+// loads and returns the current category's high score
+function getHighScore() {
+  const highScores = JSON.parse(localStorage.getItem("snakeHighScores") || "{}");
+  return highScores[getHighScoreKey()] || 0;
+}
+
+// updates and displays the current category's high score
+function updateHighScoreDisplay() {
+  highScoreDisplay.textContent = getHighScore();
+}
 
 let baseSpeed = 150;    // staring speed of snake - smaller is faster
 let currentSpeed = 150; // stores the current speed of the snake - how often the gameInterval timer runs
@@ -331,8 +351,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateContinueButtonVisibility();
 
   // arrow function makes more sense here becasue the function only exists for the click events
-  highScoreDisplay.textContent = highScore; // put the saved highscore into the html element with the id highScoreDisplay
-
+  updateHighScoreDisplay(); // refresh highscorre
   // Screen Switching Navigation - when a button is clicked the screen is changed
   goToLevelModeBtn.addEventListener("click", () => showScreen(levelSelectScreen));
   goToDifficultyModeBtn.addEventListener("click", () => showScreen(difficultySelectScreen));
@@ -360,7 +379,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // the data is then get from the bittom and it is converted from a string into a number
       currentLevel = parseInt(e.target.getAttribute("data-level"), 10);
       activeMode = "level"; // tell the current mode
-
+      updateHighScoreDisplay(); // refreshes highscore
       updateContinueButtonVisibility();
 
       // get the configuration for the selected level
@@ -388,11 +407,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // when the player clicks the start difficulty game button then the difficulty mode is being used
   startDiffGameBtn.addEventListener("click", () => {
     activeMode = "difficulty";  // set to difficulty mode
-
+    updateHighScoreDisplay(); // refreshes highscore
     updateContinueButtonVisibility();
 
-    // it needs to be read what radio button is selected
-    const selectedDifficulty = document.querySelector('input[name="gameDifficulty"]:checked').value;
+    // it needs to be read what radio button is selected - globally
+    selectedDifficulty = document.querySelector('input[name="gameDifficulty"]:checked').value;
     // the configuration for the selected difficulty
     const config = DIFFICULTY_CONFIG[selectedDifficulty];
     baseSpeed = config.baseSpeed;   // the starting speed from the difficulty settings
@@ -482,6 +501,7 @@ function showSaveNotification(message) {
 // a function that resets everything that should be when starting a new game
 function prepareGame() {
   stopGame(); // the game should be topped
+  updateHighScoreDisplay(); // refrehses  highscore
   // the color of the snake is chosen randomly every game
   snakeColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
 
@@ -966,11 +986,19 @@ function moveSnake() {
     score += 1;
     currentScoreDisplay.textContent = score;
     // if the new score is now bigger then the highscore the new score becomes the highscore
-    if (score > highScore) {
-      highScore = score;
-      highScoreDisplay.textContent = highScore; // the highscore is displayed
-      localStorage.setItem("snakeHighScore", highScore);  // and also saved in the browsers local storage
+    const currentHighScore = getHighScore();
+    if (score > currentHighScore) {
+      // Load existing records object, update the specific key, and save back to localStorage
+      const highScores = JSON.parse(localStorage.getItem("snakeHighScores") || "{}");
+      const key = getHighScoreKey();
+      
+      highScores[key] = score;
+      localStorage.setItem("snakeHighScores", JSON.stringify(highScores));
+      
+      // Update screen display
+      highScoreDisplay.textContent = score;
     }
+    
     // if the mode is in level and the score the player got is higher then the score the player needs to get to complete the level
     if (activeMode === "level" && score >= targetScore) {
       triggerLevelComplete();  // then the level complete screen is shown
